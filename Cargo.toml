@@ -1,0 +1,31 @@
+[package]
+name = "inscribe-ids"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = {version = "1.0.93", features = ["derive"]}
+serde_json = {version = "1.0.93"}
+log = "0.4.14"
+env_logger = "0.10.0"
+mysql = "*"
+lazy_static = "1.4.0"
+crossbeam = "0.8.2"
+tokio = { version = "1.21.2", features = ["full"] }
+axum = { version = "0.6.6", features = ["multipart"] }
+tower-http = {version = "0.3.5", features = ["cors"]}
+try-catch = "0.2.2"
+chrono = "0.4.23"
+secp256k1 = { version = "0.20.3", features = ["rand"] }
+sha2 = "0.10.6"
+
+
+[[bin]]
+name = "inscribe"
+path = "src/bin/main.rs"
+
+[lib]
+name = "inscribe"
+path = "src/lib.rs"
