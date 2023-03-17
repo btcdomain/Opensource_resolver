@@ -4,12 +4,43 @@ Opensource Resolver is a resolver service used to resolve btcdomain written in R
 You could check domain's unquiness and validity via this service.
 Another usage is to provide private resolving service for your project.
 
-## To start
+## Prepartion
 
-You could install directly or build from source code.
+### Prepare a fully synced bitcoin fullnode first.
+
+To do so, check https://bitcoin.org/en/full-node#other-linux-daemon
+
+We have tested on bitcore 24.0.1, you could download from:
+
+https://bitcoincore.org/en/download/
+
+To check bitcore is fully synced, using:
+
+`bitcoin-cli getblockcount`
+
+if it returns the newest block number, bitcore is working well and fully synced!
+
+### Prepare indexed ord wallet
+
+We add some useful function for ord wallet to support the resolver.
+
+See: https://github.com/btcdomain/ord_btcdomain
+
+You could install from the released version
+
+To check ord is installed well, try command:
+
+`ord --version`
+
+it should return 
+
+`0.5.0 btcdomain`
+
 
 
 ## Install
+
+You could install directly or build from source code.
 
 ## Build
 
