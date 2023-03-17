@@ -61,7 +61,7 @@ cargo build --release
 To use this api in curl
 
 `
-curl localhost:8088/api/domain/game.btc
+curl localhost:8088/open_api/domain/game.btc
 `
 
 Result:
@@ -88,7 +88,7 @@ Result:
 ## Get All Domain in address
 
 `
-127.0.0.1:8088/api/address/bc1p3pn9degqgcf4gdtly75ce9zgxdykzsvdmtv8jdqy5ay29f53wvdq9jrlgz
+127.0.0.1:8088/open_api/address/bc1p3pn9degqgcf4gdtly75ce9zgxdykzsvdmtv8jdqy5ay29f53wvdq9jrlgz
 `
 
 ```
