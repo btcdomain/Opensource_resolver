@@ -40,11 +40,17 @@ it should return
 
 ## Install
 
-You could install directly or build from source code.
+You could install directly 
+Using install.sh
+
+or build from source code.
+
 
 ## Build
 
-
+```
+cargo build --release
+```
 
 ## API Method
 
