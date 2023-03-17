@@ -33,8 +33,8 @@ pub async fn main() {
         .allow_headers(Any)
         .allow_origin(Any);
     let router = Router::new()
-        .route("/api/domain/:domain", get(resolve_domain))
-        .route("/api/address/:address", get(resolve_address))
+        .route("/open_api/domain/:domain", get(resolve_domain))
+        .route("/open_api/address/:address", get(resolve_address))
         .layer(cors.clone());
         
     
