@@ -34,7 +34,7 @@ To check ord is installed well, try command:
 
 it should return 
 
-`0.5.0 btcdomain`
+`0.5.1 btcdomain`
 
 
 
