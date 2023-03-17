@@ -56,6 +56,8 @@ cargo build --release
 
 ###  ** Notice: This service will only select info that is currently valid! Any expire domain or invalid domain will be ignored! **
 
+see more detains on https://docs.btcdomains.io/resolver-api
+
 ### Get Domain Info
 
 To use this api in curl
