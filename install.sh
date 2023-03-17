@@ -9,10 +9,10 @@ docker run -itd --name ${image_name} -p $port:$port -v table.sql:/docker-entrypo
 docker start ${image_name}
 
 export RUST_LOG=info
-export database=mysql://root:$pwd@localhost:$pord/domain_inscription_data
+export database=mysql://root:$pwd@localhost:$port/domain_inscription_data
 
-wget https://github.com/btcdomain/btcdomain_resolver/releases/download/untagged-58d18276a8ca3da2ef4b/btcdomain_resolver
-
+wget https://github.com/btcdomain/btcdomain_resolver/releases/download/v0.1.0/btcdomain_resolver
+     
 chmod +x btcdomain_resolver
 
 nohup ./btcdomain_resolver > btcdomain_resolver.log &

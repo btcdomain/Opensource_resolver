@@ -1,3 +1,5 @@
+use std::time::Duration;
+use std::thread;
 use mysql::{*, prelude::{Queryable}};
 use log::info;
 use lazy_static::lazy_static;
@@ -10,7 +12,13 @@ lazy_static!{
 
 fn get_pool() -> Pool {
     let url = get_database_url();
-    Pool::new(url.as_str()).unwrap()
+    let pool = Pool::new(url.as_str());
+    if pool.is_ok() {
+        pool.unwrap()
+    }else {
+        thread::sleep(Duration::from_secs(5));
+        get_pool()
+    }
 }
 
 pub fn insert_inscribe_info(info: InscribeInfo) -> Result<()> {
