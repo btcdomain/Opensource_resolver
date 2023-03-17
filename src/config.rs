@@ -3,12 +3,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const START_INSCRIPTION_NUMBER: u64 = 325000;
 
-pub fn get_network() -> String {
-    get_env_str( "network", "--testnet")
-}
-
 pub fn get_database_url() -> String{
-    get_env_str( "database", "mysql://root:123456@localhost:3306/ord")
+    get_env_str( "database", "None")
 }
 
 pub fn get_env_str(name: &str, def: &str) -> String {

@@ -67,3 +67,10 @@ pub struct InscribeSignData {
     #[serde(rename = "expireDate")]
     pub expire_date: u64,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct InscribeResponse<T, M> {
+    pub code: i32,
+    pub data: T,
+    pub message: M,
+}

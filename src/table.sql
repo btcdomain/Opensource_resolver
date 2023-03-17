@@ -1,7 +1,7 @@
-create database inscribe_data;
-use inscribe_data;
+create database domain_inscription_data;
+use domain_inscription_data;
 
-create table inscribe_info(
+create table domain_inscription_info(
     id bigint primary key auto_increment,
     inscribe_num bigint,
     inscribe_id varchar(200),
@@ -12,9 +12,3 @@ create table inscribe_info(
     update_time bigint
 );
 
-create table domain_info(
-    id bigint primary key auto_increment,
-    domain_name varchar(200),
-    owner_address varchar(200),
-    img_url varchar(200)
-);

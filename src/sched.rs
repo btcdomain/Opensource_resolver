@@ -14,11 +14,11 @@ pub async fn sched_work() {
     info!("sched_work start");
     let _ = crossbeam::thread::scope(|s| {
         let sync_handle = s.spawn(|_| {
-            sync_data_task(1, 10);
+            sync_data_task(1, 30);
         });
 
         let update_handle = s.spawn(|_| {
-            update_task(1, 10);
+            update_task(1, 30);
         });
 
         sync_handle.join().unwrap();
@@ -81,6 +81,7 @@ fn sync_data_task_inner() {
         let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("sync data"));
         let lastest = query_lastest_number();
         let mut max_number = std::cmp::max(lastest, START_INSCRIPTION_NUMBER);
+        let mut break_count = 0;
         loop {
             max_number += 1;
             info!("query number: {}", max_number);
@@ -146,7 +147,10 @@ fn sync_data_task_inner() {
                 }
 
             }else {
-                break;
+                break_count += 1;
+                if break_count > 30 {
+                    break;
+                }
             }
             
         }
@@ -209,13 +213,12 @@ pub fn update_task(sync_num_worker: usize, interval: u64){
 }
 
 fn update_task_inner() {
-    info!("start sync_domain_task, {:?}", &(*SYNC_DATA).read().unwrap().len());
+    info!("start update_task, {:?}", &(*SYNC_DATA).read().unwrap().len());
     if &(*SYNC_DATA).read().unwrap().len() == &0 {
         let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("update"));
         let all_domains = query_all();
         for info in all_domains.iter() {
             let inscribe_result = get_inscribe_by_number(info.inscribe_num);
-            // info!("inscribe_result: {:?}", inscribe_result);
             if inscribe_result.is_some() {
                 let content = inscribe_result.unwrap();
                 let content_data = content.content;
@@ -241,7 +244,7 @@ fn update_task_inner() {
                         if address == info.address {
                             continue;
                         }
-                        
+
                         let sign_info = InscribeSignData{
                             name: domain_name.clone(),
                             first_owner: inscribe_data.first_owner,
