@@ -2,6 +2,9 @@ use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const START_INSCRIPTION_NUMBER: u64 = 325000;
+pub const SUCCESS: i32 = 0i32;
+pub const ERROR_1: i32 = 1i32;
+pub const ERROR_2: i32 = 2i32;
 
 pub fn get_database_url() -> String{
     get_env_str( "database", "None")

@@ -11,7 +11,7 @@ docker start ${image_name}
 export RUST_LOG=info
 export database=mysql://root:$pwd@localhost:$port/domain_inscription_data
 
-wget https://github.com/btcdomain/btcdomain_resolver/releases/download/v0.1.2/btcdomain_resolver
+wget https://github.com/btcdomain/btcdomain_resolver/releases/download/v0.1.3/btcdomain_resolver
      
 chmod +x btcdomain_resolver
 

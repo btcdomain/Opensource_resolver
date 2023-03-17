@@ -7,7 +7,7 @@ const FATAL_RCVTSK: &str = "error receiving task";
 
 lazy_static::lazy_static! {
     pub static ref SYNC_DATA: Arc<RwLock<VecDeque<String>>> = Arc::new(RwLock::new(VecDeque::new()));
-    pub static ref UPDATE_DATA: Arc<RwLock<VecDeque<String>>> = Arc::new(RwLock::new(VecDeque::new()));
+    pub static ref CUR_NUMBER: Arc<RwLock<VecDeque<u64>>> = Arc::new(RwLock::new(VecDeque::new()));
 }
 
 pub async fn sched_work() {
@@ -80,12 +80,19 @@ fn sync_data_task_inner() {
     if &(*SYNC_DATA).read().unwrap().len() == &0 {
         let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("sync data"));
         let lastest = query_lastest_number();
-        let mut max_number = std::cmp::max(lastest, START_INSCRIPTION_NUMBER);
+        let mut max_number = if &(*CUR_NUMBER).read().unwrap().len() == &0 {
+            std::cmp::max(lastest, START_INSCRIPTION_NUMBER)
+        }else {
+            let cur_number = &(*CUR_NUMBER).write().unwrap().pop_front().unwrap();
+            info!("cur_number: {}, lastest: {}", cur_number, lastest);
+            std::cmp::max(*cur_number, lastest)
+        };
+        
         let mut break_count = 0;
         loop {
             max_number += 1;
             info!("query number: {}", max_number);
-            let inscribe_result = get_inscribe_by_number(max_number);
+            let (inscribe_result, _) = get_inscribe_by_number(max_number);
             // info!("inscribe_result: {:?}", inscribe_result);
             if inscribe_result.is_some() {
                 let content = inscribe_result.unwrap();
@@ -154,6 +161,7 @@ fn sync_data_task_inner() {
             }
             
         }
+        let _ = &(*CUR_NUMBER).write().unwrap().push_back(max_number);
         let _ = &(*SYNC_DATA).write().unwrap().pop_front().unwrap();
     }else {
         info!("Syncing data!");
@@ -218,7 +226,7 @@ fn update_task_inner() {
         let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("update"));
         let all_domains = query_all();
         for info in all_domains.iter() {
-            let inscribe_result = get_inscribe_by_number(info.inscribe_num);
+            let (inscribe_result, _) = get_inscribe_by_number(info.inscribe_num);
             if inscribe_result.is_some() {
                 let content = inscribe_result.unwrap();
                 let content_data = content.content;
