@@ -1,5 +1,5 @@
 [package]
-name = "inscribe-ids"
+name = "btcdomain_resolver"
 version = "0.1.0"
 edition = "2021"
 
@@ -23,9 +23,9 @@ sha2 = "0.10.6"
 
 
 [[bin]]
-name = "inscribe"
+name = "btcdomain_resolver"
 path = "src/bin/main.rs"
 
 [lib]
-name = "inscribe"
+name = "btcdomain_resolver"
 path = "src/lib.rs"

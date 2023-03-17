@@ -63,7 +63,7 @@ pub fn query_all() -> Vec<InscribeInfo> {
 
 pub fn delete_from_id(id: u64) -> Result<()>{
     let mut conn = POOL.get_conn().unwrap();
-    let sql = format!("delete from inscribe_info where id = {}", id);
+    let sql = format!("delete from domain_inscription_info where id = {}", id);
     info!("sql: {}", sql);
     let x = conn.query_drop(sql);
     info!("delete_from_id: {:?}", x);
@@ -72,7 +72,7 @@ pub fn delete_from_id(id: u64) -> Result<()>{
 
 pub fn query_by_domain(domain_name: &str) -> Vec<InscribeInfo> {
     let mut conn = POOL.get_conn().unwrap();
-    let sql = format!("SELECT * FROM inscribe_info where domain_name = '{}'", domain_name);
+    let sql = format!("SELECT * FROM domain_inscription_info where domain_name = '{}'", domain_name);
     info!("sql: {:?}", sql);
     let res = conn.query_map(sql, |(id, inscribe_num, inscribe_id, sat, domain_name, address, create_time, update_time)|{
         InscribeInfo { id, inscribe_num, inscribe_id, sat, domain_name, address, create_time, update_time }
@@ -82,7 +82,7 @@ pub fn query_by_domain(domain_name: &str) -> Vec<InscribeInfo> {
 
 pub fn query_by_address(address: &str) -> Vec<InscribeInfo> {
     let mut conn = POOL.get_conn().unwrap();
-    let sql = format!("SELECT * FROM inscribe_info where address = '{}'", address);
+    let sql = format!("SELECT * FROM domain_inscription_info where address = '{}'", address);
     info!("sql: {:?}", sql);
     let res = conn.query_map(sql, |(id, inscribe_num, inscribe_id, sat, domain_name, address, create_time, update_time)|{
         InscribeInfo { id, inscribe_num, inscribe_id, sat, domain_name, address, create_time, update_time }

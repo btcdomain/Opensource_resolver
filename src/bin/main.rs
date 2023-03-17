@@ -4,5 +4,5 @@ use log::info;
 async fn main() {
     env_logger::init();
     info!("service start");
-    inscribe::main().await;
+    btcdomain_resolver::main().await;
 }

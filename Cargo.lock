@@ -228,6 +228,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "btcdomain_resolver"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "chrono",
+ "crossbeam",
+ "env_logger",
+ "lazy_static",
+ "log",
+ "mysql",
+ "secp256k1",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tower-http",
+ "try-catch",
+]
+
+[[package]]
 name = "bufstream"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -863,26 +883,6 @@ checksum = "e14ddfc70884202db2244c223200c204c2bda1bc6e0998d11b5e024d657209e6"
 dependencies = [
  "unicode-bidi",
  "unicode-normalization",
-]
-
-[[package]]
-name = "inscribe-ids"
-version = "0.1.0"
-dependencies = [
- "axum",
- "chrono",
- "crossbeam",
- "env_logger",
- "lazy_static",
- "log",
- "mysql",
- "secp256k1",
- "serde",
- "serde_json",
- "sha2",
- "tokio",
- "tower-http",
- "try-catch",
 ]
 
 [[package]]
