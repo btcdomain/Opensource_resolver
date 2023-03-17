@@ -41,7 +41,7 @@ it should return
 ## Install
 
 You could install directly 
-Using install.sh
+using install.sh
 
 or build from source code.
 
