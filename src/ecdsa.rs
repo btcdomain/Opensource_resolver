@@ -13,8 +13,9 @@ pub fn verify(data: &[u8], sig: &str) -> bool {
     let mut hasher = Sha256::new();
     hasher.update(&data);
     let msg = Message::from_slice(&hasher.finalize()).unwrap();
-
-    let sig = Signature::from_str(&sig).unwrap();
+    
+    let mut sig = Signature::from_str(&sig).unwrap();
+    let s = sig.normalize_s();
     let res = secp.verify(&msg, &sig, &public_key);
     if res.is_ok() {
         true

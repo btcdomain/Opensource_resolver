@@ -85,10 +85,11 @@ fn sync_data_task_inner() {
         }else {
             let cur_number = &(*CUR_NUMBER).write().unwrap().pop_front().unwrap();
             info!("cur_number: {}, lastest: {}", cur_number, lastest);
-            std::cmp::max(*cur_number, lastest)
+            std::cmp::max(*cur_number - 30, lastest)
         };
         
         let mut break_count = 0;
+        
         loop {
             max_number += 1;
             info!("query number: {}", max_number);
@@ -120,7 +121,7 @@ fn sync_data_task_inner() {
                             first_owner: inscribe_data.first_owner,
                             create_date: inscribe_data.create_date,
                             register_date: inscribe_data.register_date,
-                            expire_date: inscribe_data.expire_date
+                            expire_date: expire_date
                         };
                         let sign_data = serde_json::to_vec(&sign_info).unwrap();
                         if ecdsa::verify(&sign_data, &inscribe_data.sig) {
@@ -133,7 +134,9 @@ fn sync_data_task_inner() {
                                 domain_name: domain_name.clone(), 
                                 address: address,
                                 create_time: get_now_time(),
-                                update_time: get_now_time()
+                                update_time: get_now_time(),
+                                expire_date: expire_date,
+                                register_date: inscribe_data.register_date,
                             };
                             let insert_result = insert_inscribe_info(info);
                             info!("insert_result: {:?}", insert_result);
@@ -155,7 +158,7 @@ fn sync_data_task_inner() {
 
             }else {
                 break_count += 1;
-                if break_count > 30 {
+                if break_count > 20 {
                     break;
                 }
             }
@@ -264,7 +267,7 @@ fn update_task_inner() {
                         let sign_data = serde_json::to_vec(&sign_info).unwrap();
                         if ecdsa::verify(&sign_data, &inscribe_data.sig) {
                             info!("ecds signature verify success");
-                            let insert_result = update_inscribe_info(&domain_name, &address);
+                            let insert_result = update_inscribe_info(info.id, &address);
                             info!("insert_result: {:?}", insert_result);
                             if insert_result.is_ok() {
                                 

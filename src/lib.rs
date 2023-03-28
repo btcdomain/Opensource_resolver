@@ -22,7 +22,7 @@ pub use ecdsa::*;
 
 pub async fn main() {
     
-    info!("start inscribe ids");
+    info!("start btcdomain resolver");
     let database_url = get_database_url();
     info!("database: {}", database_url);
     if database_url == "None" {
@@ -34,6 +34,7 @@ pub async fn main() {
         .allow_origin(Any);
     let router = Router::new()
         .route("/open_api/domain/:domain", get(resolve_domain))
+        .route("/open_api/domain_detail/:domain", get(resolve_detail_domain))
         .route("/open_api/address/:address", get(resolve_address))
         .layer(cors.clone());
         
@@ -51,12 +52,83 @@ pub async fn main() {
 }
 
 async fn resolve_domain(Path(domain): Path<String>) -> Response {
+    info!("resolve_domain: {:?}", domain);
     let query_result = query_by_domain(&domain);
+    let address = if query_result.len() == 1 {
+        let info = &query_result[0];
+        let (check, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
+        if check.is_some() {
+            addr
+        }else {
+            if code == ERROR_1 {
+                let _ = delete_from_id(info.id);
+            }
+            String::new()
+        }
+    }else {
+        String::new()
+    };
+    let resp = Json(InscribeResponse {
+        code: 0,
+        data: address,
+        message: String::new()
+    });
+    resp.into_response()
+}
+
+async fn resolve_detail_domain(Path(domain): Path<String>) -> Response {
+    let query_result = query_by_domain(&domain);
+    let data: Option<InscribeInfoResp> = if query_result.len() == 1 {
+        let info = &query_result[0];
+        let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
+        if proof.is_some() {
+            let domain = info.domain_name.clone();
+            Some(InscribeInfoResp {
+                inscribe_num: info.inscribe_num,
+                inscribe_id: info.inscribe_id.clone(),
+                domain_name: domain.clone(),
+                address: addr,
+                update_time: info.update_time,
+                expire_date: info.expire_date,
+                register_date: info.register_date,
+                proof: proof.unwrap(),
+                img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, &domain[0..domain.len() - 4])
+            })
+        }else {
+            if code == ERROR_1 {
+                let _ = delete_from_id(info.id);
+            }
+            None
+        }
+    }else {
+        None
+    };
+    let resp = Json(InscribeResponse {
+        code: 0,
+        data: data,
+        message: String::new()
+    });
+    resp.into_response()
+}
+
+async fn resolve_address(Path(address): Path<String>) -> Response {
+    let query_result = query_by_address(&address);
     let mut resp_data = Vec::new();
     for info in query_result.iter() {
-        let (check, code) = check_inscription(info.inscribe_num);
-        if check {
-            resp_data.push(info);
+        let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
+        if proof.is_some() {
+            let domain = info.domain_name.clone();
+            resp_data.push(InscribeInfoResp {
+                inscribe_num: info.inscribe_num,
+                inscribe_id: info.inscribe_id.clone(),
+                domain_name: domain.clone(),
+                address: addr,
+                update_time: info.update_time,
+                expire_date: info.expire_date,
+                register_date: info.register_date,
+                proof: proof.unwrap(),
+                img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, &domain[0..domain.len() - 4])
+            });
         }else {
             if code == ERROR_1 {
                 let _ = delete_from_id(info.id);
@@ -71,33 +143,13 @@ async fn resolve_domain(Path(domain): Path<String>) -> Response {
     resp.into_response()
 }
 
-async fn resolve_address(Path(address): Path<String>) -> Response {
-    let query_result = query_by_address(&address);
-    let mut resp_data = Vec::new();
-    for info in query_result.iter() {
-        let (check, code) = check_inscription(info.inscribe_num);
-        if check {
-            resp_data.push(info);
-        }else {
-            if code == ERROR_1 {
-                let _ = delete_from_id(info.id);
-            }
-        }
-    }
-    let resp = Json(InscribeResponse {
-        code: 0,
-        data: query_result,
-        message: String::new()
-    });
-    resp.into_response()
-}
-
-fn check_inscription(number: u64) -> (bool, i32) {
+fn check_inscription(number: u64, id: u64, address: &str) -> (Option<Vec<u8>>, i32, String) {
     let (inscribe_result, code) = get_inscribe_by_number(number);
     if code == SUCCESS {
         if inscribe_result.is_some() {
             let content = inscribe_result.unwrap();
             let content_data = content.content;
+            let address_online = content.address;
             let length = content_data.len();
             if length > 350 && length < 500 {
                 let format_data = serde_json::from_slice(&content_data);
@@ -107,10 +159,11 @@ fn check_inscription(number: u64) -> (bool, i32) {
                     
                     let domain_name = inscribe_data.name;
                     let expire_date = inscribe_data.expire_date;
+                    
                     let now_date = get_now_time();
                     if expire_date < now_date {
                         warn!("domain: {}, is expired, now: {}, expire_time: {}", domain_name, now_date, expire_date);
-                        return (false, ERROR_1);
+                        return (None, ERROR_1, String::new());
                     }
 
                     let sign_info = InscribeSignData{
@@ -121,21 +174,29 @@ fn check_inscription(number: u64) -> (bool, i32) {
                         expire_date: inscribe_data.expire_date
                     };
                     let sign_data = serde_json::to_vec(&sign_info).unwrap();
-                    if ecdsa::verify(&sign_data, &inscribe_data.sig) {
-                        info!("ecds signature verify success");
-                        return (true, SUCCESS);
+                    let verify_data = VerifyData {
+                        data: sign_data,
+                        signature: inscribe_data.sig
+                    };
+
+                    let proof = generate_proof(&verify_data, &domain_name);
+                    if proof.is_some() {
+                        if address == address_online {
+                            let _ = update_inscribe_info_update_time(id);
+                        }else {
+                            let _ = update_inscribe_info(id, &address_online);
+                        }
+                        return (proof, SUCCESS, address_online);
                     }else {
-                        warn!("ecds signature verify failed");
-                        return (false, ERROR_1);
-                    }
-                    
+                        return (None, ERROR_1, String::new());
+                    }                  
                 }else {
-                    return (false, ERROR_1);
+                    return (None, ERROR_1, String::new());
                 }
             }
         }
     }else {
-        return (false, code)
+        return (None, code, String::new());
     }
-    return (false, code);
+    return (None, code, String::new());
 }

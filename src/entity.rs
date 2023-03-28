@@ -11,6 +11,22 @@ pub struct InscribeInfo {
     pub address: String,
     pub create_time: u64,
     pub update_time: u64,
+    pub expire_date: u64,
+    pub register_date: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+// #[serde(rename_all = "kebab-case")]
+pub struct InscribeInfoResp {
+    pub inscribe_num: u64,
+    pub inscribe_id: String,
+    pub domain_name: String,
+    pub address: String,
+    pub update_time: u64,
+    pub expire_date: u64,
+    pub register_date: u64,
+    pub proof: Vec<u8>,
+    pub img_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -73,4 +89,10 @@ pub struct InscribeResponse<T, M> {
     pub code: i32,
     pub data: T,
     pub message: M,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct VerifyData {
+    pub data: Vec<u8>,
+    pub signature: String,
 }
