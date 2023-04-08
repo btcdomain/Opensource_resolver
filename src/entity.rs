@@ -27,6 +27,7 @@ pub struct InscribeInfoResp {
     pub register_date: u64,
     pub proof: Vec<u8>,
     pub img_url: String,
+    pub proof_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -95,4 +96,12 @@ pub struct InscribeResponse<T, M> {
 pub struct VerifyData {
     pub data: Vec<u8>,
     pub signature: String,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResolveResp {
+    pub proof: Vec<u8>,
+    pub address: String,
+    pub proof_url: String,
 }

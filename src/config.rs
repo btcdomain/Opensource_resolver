@@ -24,3 +24,7 @@ pub fn get_now_time() -> u64 {
     let start = SystemTime::now();
     start.duration_since(UNIX_EPOCH).unwrap().as_millis() as u64
 }
+
+pub fn get_proof_file() -> String{
+    get_env_str( "proof_file", "http://3.236.219.234/file")
+}

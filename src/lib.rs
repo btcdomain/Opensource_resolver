@@ -2,6 +2,7 @@ use log::{info, warn};
 use axum::{Router, Json};
 use axum::extract::Path;
 use tower_http::cors::{CorsLayer, Any};
+use std::fmt::format;
 use std::{net::SocketAddr};
 use axum::routing::{get};
 use axum::response::{Response, IntoResponse};
@@ -54,23 +55,28 @@ pub async fn main() {
 async fn resolve_domain(Path(domain): Path<String>) -> Response {
     info!("resolve_domain: {:?}", domain);
     let query_result = query_by_domain(&domain);
-    let address = if query_result.len() == 1 {
+    let (address, proof) = if query_result.len() == 1 {
         let info = &query_result[0];
-        let (check, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
-        if check.is_some() {
-            addr
+        let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
+        if proof.is_some() {
+            (addr, vec![])
         }else {
-            if code == ERROR_1 {
-                let _ = delete_from_id(info.id);
-            }
-            String::new()
+            // if code == ERROR_1 {
+            //     let _ = delete_from_id(info.id);
+            // }
+            (String::new(), vec![])
         }
     }else {
-        String::new()
+        (String::new(), vec![])
     };
+    let name = &domain[0..domain.len() - 4];
     let resp = Json(InscribeResponse {
         code: 0,
-        data: address,
+        data: ResolveResp {
+            proof: proof,
+            address: address,
+            proof_url: format!("{}/{}.bin", get_proof_file(), name)
+        },
         message: String::new()
     });
     resp.into_response()
@@ -83,6 +89,7 @@ async fn resolve_detail_domain(Path(domain): Path<String>) -> Response {
         let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
         if proof.is_some() {
             let domain = info.domain_name.clone();
+            let name = &domain[0..domain.len() - 4];
             Some(InscribeInfoResp {
                 inscribe_num: info.inscribe_num,
                 inscribe_id: info.inscribe_id.clone(),
@@ -91,13 +98,14 @@ async fn resolve_detail_domain(Path(domain): Path<String>) -> Response {
                 update_time: info.update_time,
                 expire_date: info.expire_date,
                 register_date: info.register_date,
-                proof: proof.unwrap(),
-                img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, &domain[0..domain.len() - 4])
+                proof: vec![],
+                img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, name),
+                proof_url: format!("{}/{}.bin", get_proof_file(), name)
             })
         }else {
-            if code == ERROR_1 {
-                let _ = delete_from_id(info.id);
-            }
+            // if code == ERROR_1 {
+            //     let _ = delete_from_id(info.id);
+            // }
             None
         }
     }else {
@@ -118,6 +126,7 @@ async fn resolve_address(Path(address): Path<String>) -> Response {
         let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
         if proof.is_some() {
             let domain = info.domain_name.clone();
+            let name = &domain[0..domain.len() - 4];
             resp_data.push(InscribeInfoResp {
                 inscribe_num: info.inscribe_num,
                 inscribe_id: info.inscribe_id.clone(),
@@ -126,13 +135,14 @@ async fn resolve_address(Path(address): Path<String>) -> Response {
                 update_time: info.update_time,
                 expire_date: info.expire_date,
                 register_date: info.register_date,
-                proof: proof.unwrap(),
-                img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, &domain[0..domain.len() - 4])
+                proof: vec![],
+                img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, name),
+                proof_url: format!("{}/{}.bin", get_proof_file(), name)
             });
         }else {
-            if code == ERROR_1 {
-                let _ = delete_from_id(info.id);
-            }
+            // if code == ERROR_1 {
+            //     let _ = delete_from_id(info.id);
+            // }
         }
     }
     let resp = Json(InscribeResponse {
