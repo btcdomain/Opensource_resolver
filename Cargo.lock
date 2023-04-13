@@ -78,7 +78,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c70beb79cbb5ce9c4f8e20849978f34225931f665bb49efa6982875a4d5facb3"
 
 [[package]]
-name = "btcdomain-resolve"
+name = "btcdomain-resolve-rocket"
 version = "0.1.0"
 dependencies = [
  "chrono",
