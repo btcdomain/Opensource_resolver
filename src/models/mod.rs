@@ -1,2 +1,2 @@
-pub mod inscribe;
-pub use inscribe::*;
+pub mod model;
+pub use model::*;

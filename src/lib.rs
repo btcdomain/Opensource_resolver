@@ -8,7 +8,10 @@ mod schemas;
 pub use schemas::schema::*;
 
 mod models;
-pub use models::inscribe::*;
+pub use models::model::*;
 
 mod params;
 pub use params::*;
+
+// mod sched;
+// pub use sched::works::*;
