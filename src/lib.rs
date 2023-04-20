@@ -184,19 +184,20 @@ fn check_inscription(number: u64, id: u64, address: &str) -> (Option<Vec<u8>>, i
                         expire_date: inscribe_data.expire_date
                     };
                     let sign_data = serde_json::to_vec(&sign_info).unwrap();
-                    let verify_data = VerifyData {
-                        data: sign_data,
-                        signature: inscribe_data.sig
-                    };
+                    // let verify_data = VerifyData {
+                    //     data: sign_data,
+                    //     signature: inscribe_data.sig
+                    // };
 
-                    let proof = generate_proof(&verify_data, &domain_name);
-                    if proof.is_some() {
+                    // let proof = generate_proof(&verify_data, &domain_name);
+                    // if proof.is_some() {
+                    if ecdsa::verify(&sign_data, &inscribe_data.sig) {
                         if address == address_online {
                             let _ = update_inscribe_info_update_time(id);
                         }else {
                             let _ = update_inscribe_info(id, &address_online);
                         }
-                        return (proof, SUCCESS, address_online);
+                        return (None, SUCCESS, address_online);
                     }else {
                         return (None, ERROR_1, String::new());
                     }                  

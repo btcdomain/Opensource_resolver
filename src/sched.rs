@@ -18,7 +18,7 @@ pub async fn sched_work() {
         });
 
         let update_handle = s.spawn(|_| {
-            update_task(1, 30);
+            update_task(1, 3600 * 2);
         });
 
         sync_handle.join().unwrap();
@@ -240,7 +240,7 @@ fn update_task_inner() {
                     let format_data = serde_json::from_slice(&content_data);
                     if format_data.is_ok() {
                         let inscribe_data: InscribeData = format_data.unwrap();
-                        info!("inscribe data: {:?}", inscribe_data);
+                        // info!("inscribe data: {:?}", inscribe_data);
                         
                         let domain_name = inscribe_data.name;
                         let expire_date = inscribe_data.expire_date;
@@ -267,9 +267,8 @@ fn update_task_inner() {
                         let sign_data = serde_json::to_vec(&sign_info).unwrap();
                         if ecdsa::verify(&sign_data, &inscribe_data.sig) {
                             info!("ecds signature verify success");
-                            let insert_result = update_inscribe_info(info.id, &address);
-                            info!("insert_result: {:?}", insert_result);
-                            if insert_result.is_ok() {
+                            let update_result = update_inscribe_info(info.id, &address);
+                            if update_result.is_ok() {
                                 
                             }else {
                                 break;
