@@ -1,8 +1,9 @@
-use diesel::{Queryable, AsChangeset};
+use diesel::{Insertable, AsChangeset, Queryable};
 use rocket::serde::{Serialize, Deserialize};
 use crate::schemas::*;
 
-#[derive(Queryable, Deserialize, Serialize, AsChangeset)]
+
+#[derive(Deserialize, Serialize, Insertable, AsChangeset, Queryable)]
 #[serde(crate = "rocket::serde")]
 #[diesel(table_name = domain_inscription_info)]
 pub struct DomainInscriptionInfo {
@@ -18,10 +19,3 @@ pub struct DomainInscriptionInfo {
     pub register_date: i64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct ResolveResp {
-    pub proof: Vec<u8>,
-    pub address: String,
-    pub proof_url: String,
-}

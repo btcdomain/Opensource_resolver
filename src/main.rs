@@ -1,8 +1,7 @@
-use btcdomain_resolve_rocket::{resolve_domain, resolve_detail_domain, DbConn};
+use btcdomain_resolve_rocket::{resolve_domain, resolve_detail_domain, sched_work};
 
 use rocket::{routes, catchers, catch};
 use rocket::serde::json::{Value, serde_json::json};
-
 
 #[catch(404)]
 async fn not_found_url() -> Value {
@@ -12,7 +11,7 @@ async fn not_found_url() -> Value {
 #[rocket::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
-    // rocket::tokio::spawn(sched_work());
+    rocket::tokio::spawn(sched_work());
 
     rocket::build()
         .mount("/open_api", routes![
@@ -20,8 +19,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             resolve_detail_domain
         ])
         .register("/", catchers!(not_found_url))
-        .attach(DbConn::fairing())
-        // .manage(sched_work())
         .launch().await?;
+
+
     Ok(())
 }
