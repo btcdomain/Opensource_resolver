@@ -3,7 +3,7 @@ use rocket::serde::{Serialize, Deserialize};
 use crate::schemas::*;
 
 
-#[derive(Deserialize, Serialize, Insertable, AsChangeset, Queryable)]
+#[derive(Deserialize, Serialize, Insertable, AsChangeset, Queryable, Debug)]
 #[serde(crate = "rocket::serde")]
 #[diesel(table_name = domain_inscription_info)]
 pub struct DomainInscriptionInfo {

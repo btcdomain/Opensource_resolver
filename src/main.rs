@@ -1,4 +1,4 @@
-use btcdomain_resolve_rocket::{resolve_domain, resolve_detail_domain, sched_work};
+use btcdomain_resolve_rocket::{resolve_domain, resolve_detail_domain, resolve_address, sched_work};
 
 use rocket::{routes, catchers, catch};
 use rocket::serde::json::{Value, serde_json::json};
@@ -16,7 +16,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     rocket::build()
         .mount("/open_api", routes![
             resolve_domain,
-            resolve_detail_domain
+            resolve_detail_domain,
+            resolve_address
         ])
         .register("/", catchers!(not_found_url))
         .launch().await?;

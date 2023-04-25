@@ -1,5 +1,6 @@
 // use diesel::{QueryResult, query_dsl::methods::{LimitDsl, FindDsl, OrderDsl, SelectDsl, FilterDsl}, RunQueryDsl, ExpressionMethods};
 use rocket::http::Status;
+use rocket::log::private::info;
 use rocket::response::status;
 use rocket::{get};
 use rocket::serde::json::{Value, json};
@@ -11,27 +12,27 @@ use crate::{params::*, query_by_domain, models::*, check_inscription, query_by_a
 pub async fn resolve_domain(domain: String) -> Result<Value, status::Custom<Value>> {
     info_!("resolve_domain: {:?}", domain);
     let query = query_by_domain(&domain);
+    info!("query result: {:?}", query);
     let addr_info = if query.is_ok() {
-        
         let info = query.unwrap();
         let (proof, _, _) = check_inscription(info.inscribe_num, info.id, &info.address);
         if proof.is_some() {
             let name = &domain[0..domain.len() - 4];
             ResolveResp {
-                proof: vec![],
+                // proof: vec![],
                 address: info.address,
                 proof_url: format!("{}/{}.bin", get_proof_file(), name)
             }
         }else {
             ResolveResp {
-                proof: vec![],
+                // proof: vec![],
                 address: String::new(),
                 proof_url: String::new(),
             }
         }
     }else {
         ResolveResp {
-            proof: vec![],
+            // proof: vec![],
             address: String::new(),
             proof_url: String::new(),
         }
@@ -47,6 +48,7 @@ pub async fn resolve_domain(domain: String) -> Result<Value, status::Custom<Valu
 pub async fn resolve_detail_domain(domain: String) -> Result<Value, status::Custom<Value>> {
     info_!("resolve_domain detail: {:?}", domain);
     let query = query_by_domain(&domain);
+    info!("query result: {:?}", query);
     let data: Option<InscribeInfoResp> = if query.is_ok() {
         let info = query.unwrap();
         let (proof, _, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
@@ -61,7 +63,7 @@ pub async fn resolve_detail_domain(domain: String) -> Result<Value, status::Cust
                 update_time: info.update_time,
                 expire_date: info.expire_date,
                 register_date: info.register_date,
-                proof: vec![],
+                // proof: vec![],
                 img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, name),
                 proof_url: format!("{}/{}.bin", get_proof_file(), name)
             })
@@ -102,7 +104,7 @@ pub async fn resolve_address(address: String) -> Result<Value, status::Custom<Va
                     update_time: info.update_time,
                     expire_date: info.expire_date,
                     register_date: info.register_date,
-                    proof: vec![],
+                    // proof: vec![],
                     img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, name),
                     proof_url: format!("{}/{}.bin", get_proof_file(), name)
                 })

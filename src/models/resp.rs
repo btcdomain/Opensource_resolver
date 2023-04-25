@@ -3,7 +3,7 @@ use rocket::serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct ResolveResp {
-    pub proof: Vec<u8>,
+    // pub proof: Vec<u8>,
     pub address: String,
     pub proof_url: String,
 }
@@ -26,7 +26,7 @@ pub struct InscribeInfoResp {
     pub update_time: i64,
     pub expire_date: i64,
     pub register_date: i64,
-    pub proof: Vec<u8>,
+    // pub proof: Vec<u8>,
     pub img_url: String,
     pub proof_url: String,
 }
