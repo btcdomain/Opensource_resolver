@@ -22,20 +22,20 @@ pub async fn resolve_domain(domain: String) -> Result<Value, status::Custom<Valu
             ResolveResp {
                 // proof: vec![],
                 address: info.address,
-                proof_url: format!("{}/{}.bin", get_proof_file(), name)
+                // proof_url: format!("{}/{}.bin", get_proof_file(), name)
             }
         }else {
             ResolveResp {
                 // proof: vec![],
                 address: String::new(),
-                proof_url: String::new(),
+                // proof_url: String::new(),
             }
         }
     }else {
         ResolveResp {
             // proof: vec![],
             address: String::new(),
-            proof_url: String::new(),
+            // proof_url: String::new(),
         }
     };
     Ok(json!(InscribeResponse {
@@ -68,7 +68,7 @@ pub async fn resolve_detail_domain(domain: String) -> Result<Value, status::Cust
                 register_date: info.register_date,
                 // proof: vec![],
                 img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, name),
-                proof_url: format!("{}/{}.bin", get_proof_file(), name)
+                // proof_url: format!("{}/{}.bin", get_proof_file(), name)
             })
         }else {
             // if code == ERROR_1 {
@@ -110,7 +110,7 @@ pub async fn resolve_address(address: String) -> Result<Value, status::Custom<Va
                     register_date: info.register_date,
                     // proof: vec![],
                     img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, name),
-                    proof_url: format!("{}/{}.bin", get_proof_file(), name)
+                    // proof_url: format!("{}/{}.bin", get_proof_file(), name)
                 })
             }
         }

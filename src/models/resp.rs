@@ -5,7 +5,7 @@ use rocket::serde::{Serialize, Deserialize};
 pub struct ResolveResp {
     // pub proof: Vec<u8>,
     pub address: String,
-    pub proof_url: String,
+    // pub proof_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -28,7 +28,7 @@ pub struct InscribeInfoResp {
     pub register_date: i64,
     // pub proof: Vec<u8>,
     pub img_url: String,
-    pub proof_url: String,
+    // pub proof_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
