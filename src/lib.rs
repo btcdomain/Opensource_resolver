@@ -8,8 +8,7 @@ mod schemas;
 pub use schemas::schema::*;
 
 mod models;
-pub use models::model::*;
-pub use models::resp::*;
+pub use models::*;
 
 mod params;
 pub use params::*;
@@ -20,3 +19,6 @@ pub use service::*;
 
 mod sched;
 pub use sched::works::*;
+
+mod cors;
+pub use cors::*;

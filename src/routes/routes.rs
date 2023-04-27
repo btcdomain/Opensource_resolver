@@ -1,22 +1,23 @@
-// use diesel::{QueryResult, query_dsl::methods::{LimitDsl, FindDsl, OrderDsl, SelectDsl, FilterDsl}, RunQueryDsl, ExpressionMethods};
-use rocket::http::Status;
 use rocket::log::private::info;
 use rocket::response::status;
-use rocket::{get};
+use rocket::get;
 use rocket::serde::json::{Value, json};
 use rocket::log::info_;
-use crate::{params::*, query_by_domain, models::*, check_inscription, query_by_address};
+use rocket_okapi::openapi;
+use crate::{params::*, models::*, check_inscription, repo::DomainInscriptionInfo};
 
 
-#[get("/domain/<domain>")]
+#[openapi(tag = "v1")]
+#[get("/open_api/domain/<domain>")]
 pub async fn resolve_domain(domain: String) -> Result<Value, status::Custom<Value>> {
     info_!("resolve_domain: {:?}", domain);
-    let query = query_by_domain(&domain);
+    let query = DomainInscriptionInfo::query_by_domain(&domain);
     info!("query result: {:?}", query);
     let addr_info = if query.is_ok() {
         let info = query.unwrap();
-        let (proof, _, _) = check_inscription(info.inscribe_num, info.id, &info.address);
-        if proof.is_some() {
+        let (proof, code, _) = check_inscription(info.inscribe_num, info.id, &info.address);
+        // if proof.is_some() {
+        if code == SUCCESS {
             let name = &domain[0..domain.len() - 4];
             ResolveResp {
                 // proof: vec![],
@@ -44,15 +45,17 @@ pub async fn resolve_domain(domain: String) -> Result<Value, status::Custom<Valu
     }))
 }
 
-#[get("/domain_detail/<domain>")]
+#[openapi(tag = "v1")]
+#[get("/open_api/domain_detail/<domain>")]
 pub async fn resolve_detail_domain(domain: String) -> Result<Value, status::Custom<Value>> {
     info_!("resolve_domain detail: {:?}", domain);
-    let query = query_by_domain(&domain);
+    let query = DomainInscriptionInfo::query_by_domain(&domain);
     info!("query result: {:?}", query);
     let data: Option<InscribeInfoResp> = if query.is_ok() {
         let info = query.unwrap();
-        let (proof, _, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
-        if proof.is_some() {
+        let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
+        // if proof.is_some() {
+        if code == SUCCESS {
             let domain = info.domain_name.clone();
             let name = &domain[0..domain.len() - 4];
             Some(InscribeInfoResp {
@@ -83,17 +86,18 @@ pub async fn resolve_detail_domain(domain: String) -> Result<Value, status::Cust
     }))
 }
 
-
-#[get("/address/<address>")]
+#[openapi(tag = "v1")]
+#[get("/open_api/address/<address>")]
 pub async fn resolve_address(address: String) -> Result<Value, status::Custom<Value>> {
     info_!("resolve_address : {:?}", address);
-    let query = query_by_address(&address);
+    let query = DomainInscriptionInfo::query_by_address(&address);
     let mut resp_data = Vec::new();
     if query.is_ok() {
         let infos = query.unwrap();
         for info in infos {
-            let (proof, _, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
-            if proof.is_some() {
+            let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
+            // if proof.is_some() {
+            if code == SUCCESS {
                 let domain = info.domain_name.clone();
                 let name = &domain[0..domain.len() - 4];
                 resp_data.push(InscribeInfoResp {

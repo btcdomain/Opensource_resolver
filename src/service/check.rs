@@ -1,4 +1,4 @@
-use crate::{get_inscribe_by_number, SUCCESS, ERROR_1, InscribeData, get_now_time, InscribeSignData, VerifyData, generate_proof, update_info_time, update_info_address};
+use crate::{get_inscribe_by_number, SUCCESS, ERROR_1, InscribeData, get_now_time, InscribeSignData, VerifyData, generate_proof, verify, PUBLIC_KEY, DomainInscriptionInfo};
 use rocket::log::{info_ as info, warn_ as warn};
 
 pub fn check_inscription(number: i64, id: i64, address: &str) -> (Option<Vec<u8>>, i32, String) {
@@ -32,19 +32,20 @@ pub fn check_inscription(number: i64, id: i64, address: &str) -> (Option<Vec<u8>
                         expire_date: inscribe_data.expire_date
                     };
                     let sign_data = serde_json::to_vec(&sign_info).unwrap();
-                    let verify_data = VerifyData {
-                        data: sign_data,
-                        signature: inscribe_data.sig
-                    };
+                    // let verify_data = VerifyData {
+                    //     data: sign_data,
+                    //     signature: inscribe_data.sig
+                    // };
 
-                    let proof = generate_proof(&verify_data, &domain_name);
-                    if proof.is_some() {
+                    // let proof = generate_proof(&verify_data, &domain_name);
+                    // if proof.is_some() {
+                    if verify(&sign_data, &inscribe_data.sig, PUBLIC_KEY){
                         if address == address_online {
-                            let _ = update_info_time(id);
+                            let _ = DomainInscriptionInfo::update_info_time(id);
                         }else {
-                            let _ = update_info_address(id, &address_online);
+                            let _ = DomainInscriptionInfo::update_info_address(id, &address_online);
                         }
-                        return (proof, SUCCESS, address_online);
+                        return (None, SUCCESS, address_online);
                     }else {
                         return (None, ERROR_1, String::new());
                     }                  

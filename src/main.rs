@@ -1,27 +1,28 @@
-use btcdomain_resolve_rocket::{resolve_domain, resolve_detail_domain, resolve_address, sched_work};
-
-use rocket::{routes, catchers, catch};
-use rocket::serde::json::{Value, serde_json::json};
-
-#[catch(404)]
-async fn not_found_url() -> Value {
-    json!("not found!")
-}
+use btcdomain_resolver::*;
+use rocket_okapi::{openapi_get_routes, swagger_ui::*};
 
 #[rocket::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    
+    env_logger::init();
     rocket::tokio::spawn(sched_work());
 
-    rocket::build()
-        .mount("/open_api", routes![
-            resolve_domain,
-            resolve_detail_domain,
-            resolve_address
-        ])
-        .register("/", catchers!(not_found_url))
+    let _ = rocket::build()
+        .mount("/", 
+            openapi_get_routes![
+                resolve_domain,
+                resolve_detail_domain,
+                resolve_address,
+                resolve_page
+            ]
+        )
+        .mount(
+            "/swagger-ui/",
+            make_swagger_ui(&SwaggerUIConfig {
+                url: "../openapi.json".to_owned(),
+                ..Default::default()
+            }),
+        )
+        .attach(get_cors())
         .launch().await?;
-
-
     Ok(())
 }

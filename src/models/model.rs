@@ -1,21 +1,63 @@
 use diesel::{Insertable, AsChangeset, Queryable};
-use rocket::serde::{Serialize, Deserialize};
+use rocket::{serde::{Serialize, Deserialize}};
 use crate::schemas::*;
 
-
-#[derive(Deserialize, Serialize, Insertable, AsChangeset, Queryable, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
-#[diesel(table_name = domain_inscription_info)]
-pub struct DomainInscriptionInfo {
-    pub id: i64,
-    pub inscribe_num: i64,
-    pub inscribe_id: String,
-    pub sat: i64,
-    pub domain_name: String,
-    pub address: String,
-    pub create_time: i64,
-    pub update_time: i64,
-    pub expire_date: i64,
-    pub register_date: i64,
+pub struct InscriptionByAddress {
+    pub status: String,
+    pub message: String,
+    pub result: Vec<InscriptionByAddressData>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct InscriptionByAddressData {
+    pub id: String,
+    pub num: i64,
+    pub number: u64,
+    pub detail: InscriptionByAddressDetail,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct InscriptionByAddressDetail {
+    pub id: String,
+    pub address: String,
+    pub output_value: u64,
+    pub preview: String,
+    pub content: String,
+    pub content_length: u64,
+    pub content_type: String,
+    pub timestamp: String,
+    pub genesis_transaction: String,
+    pub location: String,
+    pub output: String,
+    pub offset: u64,
+    pub content_body: String,
+}
+
+pub fn default_string() -> String {
+    String::new()
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct BtcDomainLink {
+    #[serde(rename = "type")]
+    pub _type: String,
+    pub domain: String,
+    pub obj_ins_id: String,
+    pub public_key: String,
+    pub sig: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct BtcDomainLinkSign {
+    #[serde(rename = "type")]
+    pub _type: String,
+    pub domain: String,
+    pub obj_ins_id: String,
+    pub public_key: String,
+}

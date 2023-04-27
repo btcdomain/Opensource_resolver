@@ -65,3 +65,14 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2023-04-13  6:43:45
+
+
+
+CREATE TABLE black_info (
+  id bigint AUTO_INCREMENT,
+  inscribe_num bigint DEFAULT NULL,
+  inscribe_id varchar(200) DEFAULT NULL,
+  create_time bigint DEFAULT NULL,
+  update_time bigint DEFAULT NULL,
+  PRIMARY KEY (id)
+);

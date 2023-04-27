@@ -1,8 +1,8 @@
 use lazy_static::lazy_static;
-use std::{time::{Duration, Instant}, sync::{Arc, Mutex, mpsc, RwLock}, thread, collections::VecDeque};
+use std::{time::{Duration}, sync::{Arc, Mutex, mpsc, RwLock}, thread, collections::VecDeque};
 use rocket::log::{info_ as info, warn_ as warn};
-use crate::{get_now_time, insert_inscribe_info, InscribeSignData, START_INSCRIPTION_NUMBER, InscribeData, verify, DomainInscriptionInfo, 
-    query_lastest_number, get_inscribe_by_number, query_all, delete_info, update_info_address};
+use crate::{get_now_time, InscribeSignData, START_INSCRIPTION_NUMBER, InscribeData, verify, repo::DomainInscriptionInfo, 
+    get_inscribe_by_number, PUBLIC_KEY};
 
 lazy_static! {
     pub static ref SYNC_DATA: Arc<RwLock<VecDeque<String>>> = Arc::new(RwLock::new(VecDeque::new()));
@@ -81,7 +81,7 @@ fn sync_data_task_inner() {
     info!("start sync_data_task, {:?}", &(*SYNC_DATA).read().unwrap().len());
     if &(*SYNC_DATA).read().unwrap().len() == &0 {
         let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("sync data"));
-        let lastest = query_lastest_number().unwrap();
+        let lastest = DomainInscriptionInfo::query_lastest_number().unwrap();
         let mut max_number = if &(*CUR_NUMBER).read().unwrap().len() == &0 {
             std::cmp::max(lastest, START_INSCRIPTION_NUMBER)
         }else {
@@ -126,7 +126,7 @@ fn sync_data_task_inner() {
                             expire_date: expire_date
                         };
                         let sign_data = serde_json::to_vec(&sign_info).unwrap();
-                        if verify(&sign_data, &inscribe_data.sig) {
+                        if verify(&sign_data, &inscribe_data.sig, PUBLIC_KEY) {
                             info!("ecds signature verify success");
                             let info = DomainInscriptionInfo { 
                                 id: 0,
@@ -140,7 +140,7 @@ fn sync_data_task_inner() {
                                 expire_date: expire_date,
                                 register_date: inscribe_data.register_date,
                             };
-                            let insert_result = insert_inscribe_info(info);
+                            let insert_result = DomainInscriptionInfo::insert_inscribe_info(info);
                             info!("insert_result: {:?}", insert_result);
                             if insert_result.is_ok() {
                                 
@@ -229,7 +229,7 @@ fn update_task_inner() {
     info!("start update_task, {:?}", &(*SYNC_DATA).read().unwrap().len());
     if &(*SYNC_DATA).read().unwrap().len() == &0 {
         let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("update"));
-        let all_domains = query_all().unwrap();
+        let all_domains = DomainInscriptionInfo::query_all().unwrap();
         for info in all_domains.iter() {
             let (inscribe_result, _) = get_inscribe_by_number(info.inscribe_num);
             if inscribe_result.is_some() {
@@ -249,7 +249,7 @@ fn update_task_inner() {
                         let now_date = get_now_time();
                         if expire_date < now_date {
                             warn!("domain: {}, is expired, now: {}, expire_time: {}", domain_name, now_date, expire_date);
-                            let delete_result = delete_info(info.id);
+                            let delete_result = DomainInscriptionInfo::delete_info(info.id);
                             info!("delete_result: {:?}, domain: {}", delete_result, &domain_name);
                             continue;
                         }
@@ -267,9 +267,9 @@ fn update_task_inner() {
                         };
                         
                         let sign_data = serde_json::to_vec(&sign_info).unwrap();
-                        if verify(&sign_data, &inscribe_data.sig) {
+                        if verify(&sign_data, &inscribe_data.sig, PUBLIC_KEY) {
                             info!("ecds signature verify success");
-                            let insert_result = update_info_address(info.id, &address);
+                            let insert_result = DomainInscriptionInfo::update_info_address(info.id, &address);
                             info!("insert_result: {:?}", insert_result);
                             if insert_result.is_ok() {
                                 

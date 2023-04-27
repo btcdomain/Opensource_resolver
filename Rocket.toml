@@ -1,2 +1,2 @@
-[global.databases]
-mysql_database = { url = "mysql://root:123456@127.0.0.1:3306/domain_inscription_data" }
+[global]
+port = 8088
