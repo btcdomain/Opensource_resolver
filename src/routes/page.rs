@@ -30,10 +30,11 @@ pub async fn resolve_page(req: RequestParams) -> Result<RawHtml<String>, Redirec
                 info!("content_type: {}, content: {}", content_type, content);
                 if content_type == "application/json" || content_type.starts_with("text"){
                     let content_data = query_by_url(&content).await;
-                    info!("content_data: {:?}", content_data);
+                    // info!("content_data: {:?}", content_data);
                     if content_data.is_some() {
                         let content = serde_json::from_str::<BtcDomainLink>(&content_data.unwrap());
                         if content.is_ok() {
+                            info!("content: {:?}", &content);
                             let link = content.unwrap();
                             let link_domain = &link.domain;
                             if link_domain != domain {
