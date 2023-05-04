@@ -140,12 +140,17 @@ fn sync_data_task_inner() {
                                 expire_date: expire_date,
                                 register_date: inscribe_data.register_date,
                             };
-                            let insert_result = DomainInscriptionInfo::insert_inscribe_info(info);
-                            info!("insert_result: {:?}", insert_result);
-                            if insert_result.is_ok() {
-                                
+                            let check = DomainInscriptionInfo::query_by_domain(&domain_name);
+                            if check.is_ok() {
+
                             }else {
-                                break;
+                                let insert_result = DomainInscriptionInfo::insert_inscribe_info(info);
+                                info!("insert_result: {:?}", insert_result);
+                                if insert_result.is_ok() {
+                                    
+                                }else {
+                                    break;
+                                }
                             }
                         }else {
                             info!("ecds signature verify failed");

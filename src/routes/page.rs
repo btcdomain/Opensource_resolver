@@ -28,7 +28,7 @@ pub async fn resolve_page(req: RequestParams) -> Result<RawHtml<String>, Redirec
                 let content_type = &inscribe_data.detail.content_type;
                 let content = &inscribe_data.detail.content;
                 info!("content_type: {}, content: {}", content_type, content);
-                if content_type == "application/json" {
+                if content_type == "application/json" || content_type.starts_with("text"){
                     let content_data = query_by_url(&content).await;
                     info!("content_data: {:?}", content_data);
                     if content_data.is_some() {
