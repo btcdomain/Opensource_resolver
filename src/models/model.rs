@@ -61,3 +61,12 @@ pub struct BtcDomainLinkSign {
     pub obj_ins_id: String,
     pub public_key: String,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(crate = "rocket::serde")]
+pub struct InscribeIdContent {
+    pub content: Vec<u8>,
+    pub content_type: String,
+    pub inscribe_num: i64,
+    pub address: Vec<String>,
+}

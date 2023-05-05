@@ -2,22 +2,16 @@ use std::env::{temp_dir, current_dir};
 use std::fs::File;
 use std::io::{Write};
 use std::process::Command;
-use std::time::Duration;
-use std::{sync::{Arc, RwLock}, thread, collections::VecDeque};
 use rocket::log::{info_ as info, warn_};
-use crate::{ERROR_1, ERROR_2, SUCCESS, PROGRAM_HASH, InscribeContent, VerifyData};
-
-lazy_static::lazy_static! {
-    pub static ref CUR_ORD_INDEX: Arc<RwLock<VecDeque<usize>>> = Arc::new(RwLock::new(VecDeque::new()));
-}
+use crate::{ERROR_1, ERROR_2, SUCCESS, PROGRAM_HASH, InscribeContent, VerifyData, FileLock, InscribeIdContent};
 
 pub fn get_inscribe_by_number(number: i64) -> (Option<InscribeContent>, i32) {
-    let _ = ord_index();
+    let ord_lock = FileLock::lock();
     let output = Command::new("ord")
                 .arg("find-number")
                 .arg(number.to_string()).output().unwrap();
 
-    let _ = ord_index_sub();
+    drop(ord_lock);
 
     if output.status.success() {
         let resp = serde_json::from_slice(&output.stdout);
@@ -34,19 +28,27 @@ pub fn get_inscribe_by_number(number: i64) -> (Option<InscribeContent>, i32) {
     }
 }
 
-pub fn ord_index() -> usize {
-    let length = (*CUR_ORD_INDEX).read().unwrap().len();
-    if length == 0 {
-        let _ =&(*CUR_ORD_INDEX).write().unwrap().push_back(0);
-        0
-    }else {
-        thread::sleep(Duration::from_millis(10));
-        ord_index()
-    }
-}
+pub fn get_inscribe_by_id_cmd(id: &str) -> (Option<InscribeIdContent>, i32) {
+    let ord_lock = FileLock::lock();
+    let output = Command::new("ord")
+                .arg("find-by-id")
+                .arg(id).output().unwrap();
 
-pub fn ord_index_sub() {
-    let _ = (*CUR_ORD_INDEX).write().unwrap().pop_front();
+    drop(ord_lock);
+
+    if output.status.success() {
+        let resp = serde_json::from_slice(&output.stdout);
+        
+        if resp.is_ok() {
+            (Some(resp.unwrap()), SUCCESS)
+        }else {
+            (None, ERROR_1)
+        }
+        
+    }else {
+        warn_!("get_inscribe_by_id failed id: {}, output: {:?}", id, String::from_utf8(output.stderr));
+        (None, ERROR_2)
+    }
 }
 
 pub fn generate_proof(verify_data: &VerifyData, name: &str) -> Option<Vec<u8>> {

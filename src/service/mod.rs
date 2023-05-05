@@ -9,3 +9,6 @@ pub use ecdsa::*;
 
 pub mod outer;
 pub use outer::*;
+
+mod locks;
+pub use locks::*;

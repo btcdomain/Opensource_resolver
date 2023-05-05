@@ -3,7 +3,7 @@ use rocket::get;
 use rocket::response::content::RawHtml;
 use rocket_okapi::openapi;
 use rocket::response::Redirect;
-use crate::{RequestParams, query_uisat_address, query_content_by_id, query_by_url, BtcDomainLink, BtcDomainLinkSign, verify_compact, repo::DomainInscriptionInfo, BlackInfo};
+use crate::{RequestParams, query_uisat_address, BtcDomainLink, BtcDomainLinkSign, verify_compact, repo::DomainInscriptionInfo, BlackInfo, get_inscribe_by_id_cmd};
 
 #[openapi(skip)]
 #[get("/open_api/resolve_page")]
@@ -27,12 +27,13 @@ pub async fn resolve_page(req: RequestParams) -> Result<RawHtml<String>, Redirec
             for inscribe_data in inscribe_vec.result.iter() {
                 let content_type = &inscribe_data.detail.content_type;
                 let content = &inscribe_data.detail.content;
+                let id = &inscribe_data.detail.id;
                 info!("content_type: {}, content: {}", content_type, content);
                 if content_type == "application/json" || content_type.starts_with("text"){
-                    let content_data = query_by_url(&content).await;
+                    let (content_data, _) = get_inscribe_by_id_cmd(&id);
                     // info!("content_data: {:?}", content_data);
                     if content_data.is_some() {
-                        let content = serde_json::from_str::<BtcDomainLink>(&content_data.unwrap());
+                        let content = serde_json::from_slice::<BtcDomainLink>(&content_data.unwrap().content);
                         if content.is_ok() {
                             info!("content: {:?}", &content);
                             let link = content.unwrap();
@@ -65,8 +66,8 @@ pub async fn resolve_page(req: RequestParams) -> Result<RawHtml<String>, Redirec
             }
             info!("latest_inscribe_url_id: {}", latest_inscribe_url_id);
             if latest_inscribe_url_id.len() > 0 {
-                let content = query_content_by_id(&latest_inscribe_url_id).await;
-                return Ok(RawHtml(content.unwrap()))
+                let content = get_inscribe_by_id_cmd(&latest_inscribe_url_id).0;
+                return Ok(RawHtml(String::from_utf8(content.unwrap().content).unwrap()))
             }else {
                 return Err(Redirect::to(new_url));
             }
