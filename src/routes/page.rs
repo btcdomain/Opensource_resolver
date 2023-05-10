@@ -28,8 +28,8 @@ pub async fn resolve_page(req: RequestParams) -> Result<RawHtml<String>, Redirec
                 let content_type = &inscribe_data.detail.content_type;
                 let content = &inscribe_data.detail.content;
                 let id = &inscribe_data.detail.id;
-                info!("content_type: {}, content: {}", content_type, content);
-                if content_type == "application/json" || content_type.starts_with("text"){
+                info!("content_type: {}, content: {}, id: {}", content_type, content, &id);
+                if content_type.starts_with("text") || content_type == "application/json" {
                     let (content_data, _) = get_inscribe_by_id_cmd(&id);
                     // info!("content_data: {:?}", content_data);
                     if content_data.is_some() {

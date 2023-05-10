@@ -1,13 +1,13 @@
-use crate::{get_inscribe_by_number, SUCCESS, ERROR_1, InscribeData, get_now_time, InscribeSignData, VerifyData, generate_proof, verify, PUBLIC_KEY, DomainInscriptionInfo};
+use crate::{get_inscribe_by_number, SUCCESS, ERROR_1, InscribeData, get_now_time, InscribeSignData, VerifyData, generate_proof, verify, PUBLIC_KEY, DomainInscriptionInfo, black_info::inscribe_id, get_inscribe_by_id_cmd};
 use rocket::log::{info_ as info, warn_ as warn};
 
-pub fn check_inscription(number: i64, id: i64, address: &str) -> (Option<Vec<u8>>, i32, String) {
-    let (inscribe_result, code) = get_inscribe_by_number(number);
+pub fn check_inscription(number: i64, id: i64, address: &str, in_id: &str) -> (Option<Vec<u8>>, i32, String) {
+    let (inscribe_result, code) = get_inscribe_by_id_cmd(in_id);
     if code == SUCCESS {
         if inscribe_result.is_some() {
             let content = inscribe_result.unwrap();
             let content_data = content.content;
-            let address_online = content.address;
+            let address_online = content.output_address;
             let length = content_data.len();
             if length > 350 && length < 500 {
                 let format_data = serde_json::from_slice(&content_data);

@@ -2,11 +2,13 @@ use lazy_static::lazy_static;
 use std::{time::{Duration}, sync::{Arc, Mutex, mpsc, RwLock}, thread, collections::VecDeque};
 use rocket::log::{info_ as info, warn_ as warn};
 use crate::{get_now_time, InscribeSignData, START_INSCRIPTION_NUMBER, InscribeData, verify, repo::DomainInscriptionInfo, 
-    get_inscribe_by_number, PUBLIC_KEY};
+    get_inscribe_by_number, PUBLIC_KEY, ord_index_service};
 
 lazy_static! {
     pub static ref SYNC_DATA: Arc<RwLock<VecDeque<String>>> = Arc::new(RwLock::new(VecDeque::new()));
     pub static ref CUR_NUMBER: Arc<RwLock<VecDeque<i64>>> = Arc::new(RwLock::new(VecDeque::new()));
+    pub static ref ORD_INDEX: Arc<RwLock<VecDeque<String>>> = Arc::new(RwLock::new(VecDeque::new()));
+
 }
 
 const FATAL_NOLOCK: &str = "error acquiring task lock";
@@ -14,6 +16,8 @@ const FATAL_RCVTSK: &str = "error receiving task";
 
 pub async fn sched_work() {
     info!("sched_work start");
+    let _ = &(*ORD_INDEX).write().unwrap().push_back(String::from("ord_index"));
+
     let _ = crossbeam::thread::scope(|s| {
         let sync_handle = s.spawn(|_| {
             sync_data_task(1, 60);
@@ -22,6 +26,12 @@ pub async fn sched_work() {
         let update_handle = s.spawn(|_| {
             update_task(1, 60);
         });
+
+        let index_handle = s.spawn(|_| {
+            index_task(1, 30);
+        });
+
+        index_handle.join().unwrap();
 
         sync_handle.join().unwrap();
         update_handle.join().unwrap();
@@ -247,7 +257,6 @@ fn update_task_inner() {
                     let format_data = serde_json::from_slice(&content_data);
                     if format_data.is_ok() {
                         let inscribe_data: InscribeData = format_data.unwrap();
-                        info!("inscribe data: {:?}", inscribe_data);
                         
                         let domain_name = inscribe_data.name;
                         let expire_date = inscribe_data.expire_date;
@@ -255,7 +264,7 @@ fn update_task_inner() {
                         if expire_date < now_date {
                             warn!("domain: {}, is expired, now: {}, expire_time: {}", domain_name, now_date, expire_date);
                             let delete_result = DomainInscriptionInfo::delete_info(info.id);
-                            info!("delete_result: {:?}, domain: {}", delete_result, &domain_name);
+                            warn!("delete_result: {:?}, domain: {}, is expired, now: {}, expire_time: {}", delete_result, &domain_name, now_date, expire_date);
                             continue;
                         }
 
@@ -302,4 +311,61 @@ fn update_task_inner() {
         info!("Updating data!");
     }
     
+}
+
+enum IndexInput{
+    Index(),
+    _Shutdown,
+}
+struct IndexWorker {
+    pub _id: usize,
+    pub _thread: Option<thread::JoinHandle<()>>
+}
+impl IndexWorker {
+    pub fn start (
+        id: usize,
+        query_tx: Arc<Mutex<mpsc::Receiver<IndexInput>>>,
+     ) -> IndexWorker {
+        let thread = thread::spawn(move || loop {
+            let task = {
+                let rx = query_tx.lock().expect(FATAL_NOLOCK);
+                rx.recv().expect(FATAL_RCVTSK)
+            };
+
+            match task {
+                IndexInput::Index() => {
+                    index_inner();
+                },
+                IndexInput::_Shutdown => break,
+            }
+        });
+
+        IndexWorker { _id: id, _thread: Some(thread) }
+     }
+
+}
+
+fn index_task(query_num_worker: usize, interval: u64){
+    let (clear_tx, _) = {
+        let (tx, rx) = mpsc::channel();
+        let rx = Arc::new(Mutex::new(rx));
+
+        let workers: Vec<IndexWorker> = (0..query_num_worker).map(|n| {
+            IndexWorker::start(n as usize, rx.clone())
+        }).collect();
+        (tx, workers)
+    };
+    loop {
+        let q = IndexInput::Index();
+        clear_tx.clone().send(q).expect("ord index send error");
+        thread::sleep(Duration::from_secs(interval));
+    }
+}
+
+fn index_inner() {
+    info!("ord_index_inner: {:?}", &(*ORD_INDEX).read().unwrap().len());
+    if &(*ORD_INDEX).read().unwrap().len() > &0 {
+        info!("There are ((({:?}))) domain INDEX_inner", &(*ORD_INDEX).read().unwrap().len());
+        ord_index_service();       
+    }
 }

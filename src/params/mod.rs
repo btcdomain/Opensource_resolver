@@ -20,6 +20,10 @@ pub const ERROR_2: i32 = 2i32;
 pub const PROGRAM_HASH: &str = "0x69ba56d1a366f02710e30446b55360392456bc7e5502bbb6227130c0c9e1080";
 pub const DEFAULT_IMG_URL: &str = "https://btcdomains.io/images/domain";
 
+pub enum OrdOp{
+    NUMBER,
+    ID,
+}
 
 pub fn get_now_time() -> i64 {
     let start = SystemTime::now();

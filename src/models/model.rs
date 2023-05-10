@@ -68,5 +68,6 @@ pub struct InscribeIdContent {
     pub content: Vec<u8>,
     pub content_type: String,
     pub inscribe_num: i64,
-    pub address: Vec<String>,
+    pub output_address: String,
+    pub input_address: String,
 }

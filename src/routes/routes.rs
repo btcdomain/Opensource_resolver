@@ -15,7 +15,7 @@ pub async fn resolve_domain(domain: String) -> Result<Value, status::Custom<Valu
     info!("query result: {:?}", query);
     let addr_info = if query.is_ok() {
         let info = query.unwrap();
-        let (proof, code, _) = check_inscription(info.inscribe_num, info.id, &info.address);
+        let (proof, code, _) = check_inscription(info.inscribe_num, info.id, &info.address, &info.inscribe_id);
         // if proof.is_some() {
         if code == SUCCESS {
             let name = &domain[0..domain.len() - 4];
@@ -53,7 +53,7 @@ pub async fn resolve_detail_domain(domain: String) -> Result<Value, status::Cust
     info!("query result: {:?}", query);
     let data: Option<InscribeInfoResp> = if query.is_ok() {
         let info = query.unwrap();
-        let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
+        let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address, &info.inscribe_id);
         // if proof.is_some() {
         if code == SUCCESS {
             let domain = info.domain_name.clone();
@@ -95,7 +95,7 @@ pub async fn resolve_address(address: String) -> Result<Value, status::Custom<Va
     if query.is_ok() {
         let infos = query.unwrap();
         for info in infos {
-            let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address);
+            let (proof, code, addr) = check_inscription(info.inscribe_num, info.id, &info.address, &info.inscribe_id);
             // if proof.is_some() {
             if code == SUCCESS {
                 let domain = info.domain_name.clone();

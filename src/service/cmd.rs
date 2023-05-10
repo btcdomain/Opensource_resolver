@@ -3,15 +3,25 @@ use std::fs::File;
 use std::io::{Write};
 use std::process::Command;
 use rocket::log::{info_ as info, warn_};
-use crate::{ERROR_1, ERROR_2, SUCCESS, PROGRAM_HASH, InscribeContent, VerifyData, FileLock, InscribeIdContent};
+use std::time::{Duration, Instant};
+use std::{sync::{Arc, RwLock}, thread, collections::VecDeque};
+use crate::{ERROR_1, ERROR_2, SUCCESS, PROGRAM_HASH, InscribeContent, VerifyData, InscribeIdContent, OrdOp, FileLock, FILE_LOCK_NAME, FILE_LOCK2_NAME};
+
+
+lazy_static::lazy_static! {
+    pub static ref CUR_ORD_INDEX: Arc<RwLock<VecDeque<usize>>> = Arc::new(RwLock::new(VecDeque::new()));
+    pub static ref CUR_ORD2_INDEX: Arc<RwLock<VecDeque<usize>>> = Arc::new(RwLock::new(VecDeque::new()));
+}
 
 pub fn get_inscribe_by_number(number: i64) -> (Option<InscribeContent>, i32) {
-    let ord_lock = FileLock::lock();
+    // let _ = ord_index(OrdOp::NUMBER);
+    let lock = FileLock::lock(FILE_LOCK_NAME);
     let output = Command::new("ord")
                 .arg("find-number")
                 .arg(number.to_string()).output().unwrap();
 
-    drop(ord_lock);
+    // let _ = ord_index_sub();
+    drop(lock);
 
     if output.status.success() {
         let resp = serde_json::from_slice(&output.stdout);
@@ -29,13 +39,18 @@ pub fn get_inscribe_by_number(number: i64) -> (Option<InscribeContent>, i32) {
 }
 
 pub fn get_inscribe_by_id_cmd(id: &str) -> (Option<InscribeIdContent>, i32) {
-    let ord_lock = FileLock::lock();
+    let start_time = Instant::now();
+    // let _ = ord2_index(OrdOp::ID);
+    let lock = FileLock::lock(FILE_LOCK2_NAME);
+    info!("id: {:?}, wait index time: {:?}", id, start_time.elapsed());
     let output = Command::new("ord")
+                .arg("--data-dir=/home/ubuntu/.local/share2/ord")
                 .arg("find-by-id")
                 .arg(id).output().unwrap();
 
-    drop(ord_lock);
-
+    // let _ = ord2_index_sub();
+    info!("id: {:?}, cmd end time: {:?}", id, start_time.elapsed());
+    drop(lock);
     if output.status.success() {
         let resp = serde_json::from_slice(&output.stdout);
         
@@ -49,6 +64,53 @@ pub fn get_inscribe_by_id_cmd(id: &str) -> (Option<InscribeIdContent>, i32) {
         warn_!("get_inscribe_by_id failed id: {}, output: {:?}", id, String::from_utf8(output.stderr));
         (None, ERROR_2)
     }
+}
+
+// pub fn ord_index(op: OrdOp) -> usize {
+//     let length = (*CUR_ORD_INDEX).read().unwrap().len();
+//     if length == 0 {
+//         let _ =&(*CUR_ORD_INDEX).write().unwrap().push_back(0);
+//         0
+//     }else {
+//         match op {
+//             OrdOp::ID => {thread::sleep(Duration::from_millis(10));},
+//             OrdOp::NUMBER => {thread::sleep(Duration::from_millis(100));}
+//         }
+//         ord_index(op)
+//     }
+// }
+
+// pub fn ord_index_sub() {
+//     let _ = (*CUR_ORD_INDEX).write().unwrap().pop_front();
+// }
+
+// pub fn ord2_index(op: OrdOp) -> usize {
+//     let length = (*CUR_ORD2_INDEX).read().unwrap().len();
+//     if length == 0 {
+//         let _ =&(*CUR_ORD2_INDEX).write().unwrap().push_back(0);
+//         0
+//     }else {
+//         match op {
+//             OrdOp::ID => {thread::sleep(Duration::from_millis(10));},
+//             OrdOp::NUMBER => {thread::sleep(Duration::from_millis(100));}
+//         }
+//         ord2_index(op)
+//     }
+// }
+
+// pub fn ord2_index_sub() {
+//     let _ = (*CUR_ORD2_INDEX).write().unwrap().pop_front();
+// }
+
+pub fn ord_index_service() {
+    // let _ = ord2_index(OrdOp::ID);
+    let lock = FileLock::lock(FILE_LOCK2_NAME);
+    let _ = Command::new("ord")
+        .arg("--data-dir=/home/ubuntu/.local/share2/ord")
+        .arg("index")
+        .output().unwrap();
+    // ord2_index_sub();
+    drop(lock);
 }
 
 pub fn generate_proof(verify_data: &VerifyData, name: &str) -> Option<Vec<u8>> {
