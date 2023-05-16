@@ -76,3 +76,14 @@ pub struct InscribeResponse<T, M> {
     pub data: T,
     pub message: M,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct InscribeInfoResp {
+    pub inscribe_num: i64,
+    pub inscribe_id: String,
+    pub domain_name: String,
+    pub address: String,
+    pub expire_date: i64,
+    pub register_date: i64,
+    pub img_url: String,
+}

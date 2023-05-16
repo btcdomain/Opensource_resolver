@@ -76,9 +76,20 @@ async fn resolve_domain_detail(Path(domain): Path<String>) -> Response {
     let query_result = query_by_domain(&domain);
     let mut resp_data = Vec::new();
     for info in query_result.iter() {
-        let (check, code) = check_inscription(info.inscribe_num);
+        // let (check, code) = check_inscription(info.inscribe_num);
+        let check = true;
         if check {
-            resp_data.push(info);
+            let domain = info.domain_name.clone();
+            let name = &domain[0..domain.len() - 4];
+            resp_data.push(InscribeInfoResp {
+                inscribe_id: info.inscribe_id.to_string(),
+                inscribe_num: info.inscribe_num as i64,
+                domain_name: info.domain_name.to_string(),
+                address: info.address.to_string(),
+                expire_date: info.expire_date,
+                register_date: info.register_date,
+                img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, name),
+            });
         }
     }
     let resp = Json(InscribeResponse {
@@ -95,7 +106,17 @@ async fn resolve_address(Path(address): Path<String>) -> Response {
     for info in query_result.iter() {
         let (check, code) = check_inscription(info.inscribe_num);
         if check {
-            resp_data.push(info);
+            let domain = info.domain_name.clone();
+            let name = &domain[0..domain.len() - 4];
+            resp_data.push(InscribeInfoResp {
+                inscribe_id: info.inscribe_id.to_string(),
+                inscribe_num: info.inscribe_num as i64,
+                domain_name: info.domain_name.to_string(),
+                address: info.address.to_string(),
+                expire_date: info.expire_date,
+                register_date: info.register_date,
+                img_url: format!("{}/{}.jpeg", DEFAULT_IMG_URL, name),
+            });
         }
     }
     let resp = Json(InscribeResponse {
