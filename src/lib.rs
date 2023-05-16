@@ -53,20 +53,20 @@ pub async fn main() {
 
 async fn resolve_domain(Path(domain): Path<String>) -> Response {
     let query_result = query_by_domain(&domain);
-    let mut resp_data = Vec::new();
-    for info in query_result.iter() {
-        let (check, code) = check_inscription(info.inscribe_num);
+    let address = if query_result.len() == 0 {
+        String::new()
+    }else {
+        let address = &query_result[0].address;
+        let (check, code) = check_inscription(query_result[0].inscribe_num);
         if check {
-            resp_data.push(info);
+            address.to_string()
         }else {
-            if code == ERROR_1 {
-                let _ = delete_from_id(info.id);
-            }
+            String::new()
         }
-    }
+    };
     let resp = Json(InscribeResponse {
         code: 0,
-        data: resp_data,
+        data: address,
         message: String::new()
     });
     resp.into_response()
@@ -79,10 +79,6 @@ async fn resolve_domain_detail(Path(domain): Path<String>) -> Response {
         let (check, code) = check_inscription(info.inscribe_num);
         if check {
             resp_data.push(info);
-        }else {
-            if code == ERROR_1 {
-                let _ = delete_from_id(info.id);
-            }
         }
     }
     let resp = Json(InscribeResponse {
@@ -100,10 +96,6 @@ async fn resolve_address(Path(address): Path<String>) -> Response {
         let (check, code) = check_inscription(info.inscribe_num);
         if check {
             resp_data.push(info);
-        }else {
-            if code == ERROR_1 {
-                let _ = delete_from_id(info.id);
-            }
         }
     }
     let resp = Json(InscribeResponse {
