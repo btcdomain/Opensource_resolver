@@ -9,6 +9,8 @@ create table if not exists domain_inscription_info(
     domain_name varchar(200),
     address varchar(200),
     create_time bigint,
-    update_time bigint
+    update_time bigint,
+    expire_date bigint,
+    register_date bigint
 );
 

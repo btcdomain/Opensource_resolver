@@ -1,7 +1,7 @@
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub const START_INSCRIPTION_NUMBER: u64 = 325000;
+pub const START_INSCRIPTION_NUMBER: u64 = 336000;
 pub const SUCCESS: i32 = 0i32;
 pub const ERROR_1: i32 = 1i32;
 pub const ERROR_2: i32 = 2i32;

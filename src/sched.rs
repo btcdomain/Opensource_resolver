@@ -133,7 +133,9 @@ fn sync_data_task_inner() {
                                 domain_name: domain_name.clone(), 
                                 address: address,
                                 create_time: get_now_time(),
-                                update_time: get_now_time()
+                                update_time: get_now_time(),
+                                expire_date: inscribe_data.expire_date as i64,
+                                register_date: inscribe_data.register_date as i64,
                             };
                             let check_domain = query_by_domain(&domain_name);
                             if check_domain.len() == 0 {

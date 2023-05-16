@@ -11,6 +11,8 @@ pub struct InscribeInfo {
     pub address: String,
     pub create_time: u64,
     pub update_time: u64,
+    pub expire_date: i64,
+    pub register_date: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
