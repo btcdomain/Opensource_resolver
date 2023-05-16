@@ -80,7 +80,7 @@ pub fn delete_from_id(id: u64) -> Result<()>{
 
 pub fn query_by_domain(domain_name: &str) -> Vec<InscribeInfo> {
     let mut conn = POOL.get_conn().unwrap();
-    let sql = format!("SELECT * FROM domain_inscription_info where domain_name = '{}'", domain_name);
+    let sql = format!("SELECT * FROM domain_inscription_info where domain_name = '{}' order by inscribe_num asc limit 1", domain_name);
     info!("sql: {:?}", sql);
     let res = conn.query_map(sql, |(id, inscribe_num, inscribe_id, sat, domain_name, address, create_time, update_time)|{
         InscribeInfo { id, inscribe_num, inscribe_id, sat, domain_name, address, create_time, update_time }

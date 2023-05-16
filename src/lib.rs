@@ -34,6 +34,7 @@ pub async fn main() {
         .allow_origin(Any);
     let router = Router::new()
         .route("/open_api/domain/:domain", get(resolve_domain))
+        .route("/open_api/domain_detail/:domain", get(resolve_domain_detail))
         .route("/open_api/address/:address", get(resolve_address))
         .layer(cors.clone());
         
@@ -51,6 +52,27 @@ pub async fn main() {
 }
 
 async fn resolve_domain(Path(domain): Path<String>) -> Response {
+    let query_result = query_by_domain(&domain);
+    let mut resp_data = Vec::new();
+    for info in query_result.iter() {
+        let (check, code) = check_inscription(info.inscribe_num);
+        if check {
+            resp_data.push(info);
+        }else {
+            if code == ERROR_1 {
+                let _ = delete_from_id(info.id);
+            }
+        }
+    }
+    let resp = Json(InscribeResponse {
+        code: 0,
+        data: resp_data,
+        message: String::new()
+    });
+    resp.into_response()
+}
+
+async fn resolve_domain_detail(Path(domain): Path<String>) -> Response {
     let query_result = query_by_domain(&domain);
     let mut resp_data = Vec::new();
     for info in query_result.iter() {

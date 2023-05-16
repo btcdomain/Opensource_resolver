@@ -135,12 +135,10 @@ fn sync_data_task_inner() {
                                 create_time: get_now_time(),
                                 update_time: get_now_time()
                             };
-                            let insert_result = insert_inscribe_info(info);
-                            info!("insert_result: {:?}", insert_result);
-                            if insert_result.is_ok() {
-                                
-                            }else {
-                                break;
+                            let check_domain = query_by_domain(&domain_name);
+                            if check_domain.len() == 0 {
+                                let insert_result = insert_inscribe_info(info);
+                                info!("insert_result: {:?}", insert_result);
                             }
                         }else {
                             info!("ecds signature verify failed");
