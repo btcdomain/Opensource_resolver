@@ -58,6 +58,11 @@ impl DomainInscriptionInfo {
         let mut conn = POOL.get().unwrap();
         domain_inscription_info::table.order(domain_inscription_info::id.desc()).load::<DomainInscriptionInfo>(&mut conn)
     }
+
+    pub fn query_all_size() -> QueryResult<i64> { 
+        let mut conn = POOL.get().unwrap();
+        domain_inscription_info::table.count().get_result(&mut conn)
+    }
     
     pub fn update_info_time(data_id: i64) -> QueryResult<usize> {
         let mut conn = POOL.get().unwrap();

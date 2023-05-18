@@ -3,9 +3,7 @@ use rocket::serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct ResolveResp {
-    // pub proof: Vec<u8>,
     pub address: String,
-    // pub proof_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -23,22 +21,52 @@ pub struct InscribeInfoResp {
     pub inscribe_id: String,
     pub domain_name: String,
     pub address: String,
-    pub update_time: i64,
+    pub create_date: i64,
     pub expire_date: i64,
     pub register_date: i64,
-    // pub proof: Vec<u8>,
     pub img_url: String,
-    // pub proof_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct InscribeContent {
     pub content: Vec<u8>,
+    pub inscribe_num: u64,
+    pub inscribe_id: String,
+    pub timestamp: u32,
+    pub address: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct InscribeContentSimple {
+    pub content: Vec<u8>,
     pub inscribe_num: i64,
     pub inscribe_id: String,
-    pub sat: i64,
-    pub address: String,
+    pub timestamp: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct InscribeIdContent {
+    pub content: Vec<u8>,
+    pub content_type: String,
+    pub inscribe_num: i64,
+    pub output_address: String,
+    pub input_address: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct InscribeAddr {
+    pub output_address: String,
+    pub input_address: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct CurMaxInsNum {
+    pub inscribe_num: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

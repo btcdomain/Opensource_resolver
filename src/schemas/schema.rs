@@ -23,3 +23,11 @@ diesel::table! {
         update_time -> BigInt,
     }
 }
+
+diesel::table! {
+    page_info (id) {
+        id -> BigInt,
+        domain_name -> Varchar,
+        inscribe_id -> Varchar,
+    }
+}

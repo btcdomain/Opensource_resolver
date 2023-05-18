@@ -20,7 +20,7 @@ pub struct FileLock(File);
 impl FileLock {
     pub fn lock(file_name: &str) -> FileLock {
         let file_lock_file = tmp_path(file_name);
-        info!("Acquiring File lock at {:?} ...", &file_lock_file);
+        debug!("Acquiring File lock at {:?} ...", &file_lock_file);
         let f = File::create(&file_lock_file)
             .unwrap_or_else(|_| panic!("Cannot create File lock file at {:?}", &file_lock_file));
         f.lock_exclusive().unwrap();
@@ -32,6 +32,6 @@ impl FileLock {
 impl Drop for FileLock {
     fn drop(&mut self) {
         self.0.unlock().unwrap();
-        info!("File lock released!");
+        debug!("File lock released!");
     }
 }

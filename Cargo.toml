@@ -22,6 +22,8 @@ log = "0.4.17"
 env_logger = "0.10.0"
 reqwest = { version = "0.11", features = ["json"] }
 fs2 = "0.4.3"
+tokio = {version = "1.28.0", features = ["rt"]}
+
 
 
 [dependencies.rocket_sync_db_pools]

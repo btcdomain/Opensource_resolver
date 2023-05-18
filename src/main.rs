@@ -12,7 +12,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 resolve_domain,
                 resolve_detail_domain,
                 resolve_address,
-                resolve_page
+                resolve_page,
+                load_default_data,
             ]
         )
         .mount(

@@ -71,3 +71,27 @@ pub struct InscribeIdContent {
     pub output_address: String,
     pub input_address: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct CurMaxInsNum {
+    pub inscribe_num: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct InscribeApiContent {
+    pub content: Vec<u8>,
+    pub content_type: String,
+    pub inscribe_num: i64,
+    pub inscribe_id: String,
+    pub timestamp: i64,
+    pub output_address: String,
+    pub input_address: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd)]
+#[serde(crate = "rocket::serde")]
+pub struct InscriptionTotal {
+    pub total: usize,
+}

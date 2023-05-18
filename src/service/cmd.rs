@@ -2,10 +2,11 @@ use std::env::{temp_dir, current_dir};
 use std::fs::File;
 use std::io::{Write};
 use std::process::Command;
+use log::warn;
 use rocket::log::{info_ as info, warn_};
 use std::time::{Duration, Instant};
 use std::{sync::{Arc, RwLock}, thread, collections::VecDeque};
-use crate::{ERROR_1, ERROR_2, SUCCESS, PROGRAM_HASH, InscribeContent, VerifyData, InscribeIdContent, OrdOp, FileLock, FILE_LOCK_NAME, FILE_LOCK2_NAME};
+use crate::{ERROR_1, ERROR_2, SUCCESS, PROGRAM_HASH, InscribeContent, VerifyData, InscribeIdContent, InscribeContentSimple, FileLock, FILE_LOCK_NAME, FILE_LOCK2_NAME, InscribeAddr};
 
 
 lazy_static::lazy_static! {
@@ -38,19 +39,48 @@ pub fn get_inscribe_by_number(number: i64) -> (Option<InscribeContent>, i32) {
     }
 }
 
-pub fn get_inscribe_by_id_cmd(id: &str) -> (Option<InscribeIdContent>, i32) {
-    let start_time = Instant::now();
-    // let _ = ord2_index(OrdOp::ID);
-    let lock = FileLock::lock(FILE_LOCK2_NAME);
-    info!("id: {:?}, wait index time: {:?}", id, start_time.elapsed());
+pub fn get_content_cmd(number: i64) -> Option<InscribeContentSimple> {
+    // let ord_lock = FileLock::lock();
     let output = Command::new("ord")
-                .arg("--data-dir=/home/ubuntu/.local/share2/ord")
+                .arg("find-content")
+                .arg(number.to_string()).output().unwrap();
+
+    // drop(ord_lock);
+
+    if output.status.success() {
+        let resp = serde_json::from_slice(&output.stdout);
+        
+        if resp.is_ok() {
+            Some(resp.unwrap())
+        }else {
+            None
+        }
+        
+    }else {
+        let err_msg = String::from_utf8(output.stderr).ok();
+        if err_msg.is_some() {
+            warn!("find-content failed number: {}, output: {:?}", number, err_msg);
+            let err_msg = err_msg.unwrap();
+            if err_msg.contains("JSON-RPC error") {
+                None
+            }else {
+                None
+            }
+        }else {
+            None
+        }
+    }
+}
+
+pub fn get_inscribe_by_id(id: &str) -> (Option<InscribeIdContent>, i32) {
+    // let ord_lock = FileLock::lock();
+    let output = Command::new("ord")
+                // .arg("--data-dir=/home/ubuntu/.local/share2/ord")
                 .arg("find-by-id")
                 .arg(id).output().unwrap();
 
-    // let _ = ord2_index_sub();
-    info!("id: {:?}, cmd end time: {:?}", id, start_time.elapsed());
-    drop(lock);
+    // drop(ord_lock);
+
     if output.status.success() {
         let resp = serde_json::from_slice(&output.stdout);
         
@@ -61,46 +91,34 @@ pub fn get_inscribe_by_id_cmd(id: &str) -> (Option<InscribeIdContent>, i32) {
         }
         
     }else {
-        warn_!("get_inscribe_by_id failed id: {}, output: {:?}", id, String::from_utf8(output.stderr));
+        warn!("get_inscribe_by_id failed id: {}, output: {:?}", id, String::from_utf8(output.stderr));
         (None, ERROR_2)
     }
 }
 
-// pub fn ord_index(op: OrdOp) -> usize {
-//     let length = (*CUR_ORD_INDEX).read().unwrap().len();
-//     if length == 0 {
-//         let _ =&(*CUR_ORD_INDEX).write().unwrap().push_back(0);
-//         0
-//     }else {
-//         match op {
-//             OrdOp::ID => {thread::sleep(Duration::from_millis(10));},
-//             OrdOp::NUMBER => {thread::sleep(Duration::from_millis(100));}
-//         }
-//         ord_index(op)
-//     }
-// }
+pub fn get_addr_by_id(id: &str) -> Option<InscribeAddr> {
+    // let ord_lock = FileLock::lock();
+    let output = Command::new("ord")
+                // .arg("--data-dir=/home/ubuntu/.local/share2/ord")
+                .arg("find-addr")
+                .arg(id).output().unwrap();
 
-// pub fn ord_index_sub() {
-//     let _ = (*CUR_ORD_INDEX).write().unwrap().pop_front();
-// }
+    // drop(ord_lock);
 
-// pub fn ord2_index(op: OrdOp) -> usize {
-//     let length = (*CUR_ORD2_INDEX).read().unwrap().len();
-//     if length == 0 {
-//         let _ =&(*CUR_ORD2_INDEX).write().unwrap().push_back(0);
-//         0
-//     }else {
-//         match op {
-//             OrdOp::ID => {thread::sleep(Duration::from_millis(10));},
-//             OrdOp::NUMBER => {thread::sleep(Duration::from_millis(100));}
-//         }
-//         ord2_index(op)
-//     }
-// }
-
-// pub fn ord2_index_sub() {
-//     let _ = (*CUR_ORD2_INDEX).write().unwrap().pop_front();
-// }
+    if output.status.success() {
+        let resp = serde_json::from_slice(&output.stdout);
+        
+        if resp.is_ok() {
+            Some(resp.unwrap())
+        }else {
+            None
+        }
+        
+    }else {
+        warn!("get_addr_by_id failed id: {}, output: {:?}", id, String::from_utf8(output.stderr));
+        None
+    }
+}
 
 pub fn ord_index_service() {
     // let _ = ord2_index(OrdOp::ID);

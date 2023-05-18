@@ -1,8 +1,9 @@
 use lazy_static::lazy_static;
+use tokio::runtime::Runtime;
 use std::{time::{Duration}, sync::{Arc, Mutex, mpsc, RwLock}, thread, collections::VecDeque};
 use rocket::log::{info_ as info, warn_ as warn};
 use crate::{get_now_time, InscribeSignData, START_INSCRIPTION_NUMBER, InscribeData, verify, repo::DomainInscriptionInfo, 
-    get_inscribe_by_number, PUBLIC_KEY, ord_index_service};
+    get_inscribe_by_number, PUBLIC_KEY, ord_index_service, get_content_cmd, get_addr_by_id, get_content_by_id_api, get_content_by_number_api};
 
 lazy_static! {
     pub static ref SYNC_DATA: Arc<RwLock<VecDeque<String>>> = Arc::new(RwLock::new(VecDeque::new()));
@@ -24,7 +25,7 @@ pub async fn sched_work() {
         });
 
         let update_handle = s.spawn(|_| {
-            update_task(1, 60);
+            update_task(1, 600);
         });
 
         let index_handle = s.spawn(|_| {
@@ -82,15 +83,15 @@ pub fn sync_data_task(sync_num_worker: usize, interval: u64){
     };
     loop {
         let q = SyncDataInput::SyncData();
-        sync_data_tx.clone().send(q).expect("sync workd send error");
+        sync_data_tx.clone().send(q).ok();
         thread::sleep(Duration::from_secs(interval));
     }
 }
 
 fn sync_data_task_inner() {
     info!("start sync_data_task, {:?}", &(*SYNC_DATA).read().unwrap().len());
-    if &(*SYNC_DATA).read().unwrap().len() == &0 {
-        let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("sync data"));
+    // if &(*SYNC_DATA).read().unwrap().len() == &0 {
+    //     let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("sync data"));
         let lastest = DomainInscriptionInfo::query_lastest_number().unwrap();
         let mut max_number = if &(*CUR_NUMBER).read().unwrap().len() == &0 {
             std::cmp::max(lastest, START_INSCRIPTION_NUMBER)
@@ -101,19 +102,22 @@ fn sync_data_task_inner() {
         };
         
         let mut break_count = 0;
-        
+        let mut counter = 0;
         loop {
+            counter += 1;
+            if counter == 2000 {
+                break;
+            }
             max_number += 1;
             info!("query number: {}", max_number);
-            let (inscribe_result, _) = get_inscribe_by_number(max_number);
-            // info!("inscribe_result: {:?}", inscribe_result);
-            if inscribe_result.is_some() {
+            let inscribe_result = Runtime::new().unwrap().block_on(get_content_by_number_api(max_number));
+            if inscribe_result.is_ok() {
                 let content = inscribe_result.unwrap();
                 let content_data = content.content;
                 let inscribe_num = content.inscribe_num;
                 let inscribe_id = content.inscribe_id;
-                let address = content.address;
                 let length = content_data.len();
+                let address = content.address;
                 if length > 350 && length < 500 {
                     let format_data = serde_json::from_slice(&content_data);
                     if format_data.is_ok() {
@@ -136,11 +140,13 @@ fn sync_data_task_inner() {
                             expire_date: expire_date
                         };
                         let sign_data = serde_json::to_vec(&sign_info).unwrap();
+
+
                         if verify(&sign_data, &inscribe_data.sig, PUBLIC_KEY) {
                             info!("ecds signature verify success");
                             let info = DomainInscriptionInfo { 
                                 id: 0,
-                                inscribe_num: inscribe_num, 
+                                inscribe_num: inscribe_num as i64, 
                                 inscribe_id: inscribe_id, 
                                 sat: 0, 
                                 domain_name: domain_name.clone(), 
@@ -156,11 +162,6 @@ fn sync_data_task_inner() {
                             }else {
                                 let insert_result = DomainInscriptionInfo::insert_inscribe_info(info);
                                 info!("insert_result: {:?}", insert_result);
-                                if insert_result.is_ok() {
-                                    
-                                }else {
-                                    break;
-                                }
                             }
                         }else {
                             info!("ecds signature verify failed");
@@ -174,6 +175,7 @@ fn sync_data_task_inner() {
                 }
 
             }else {
+                max_number -= 1;
                 break_count += 1;
                 if break_count > 10 {
                     break;
@@ -181,11 +183,11 @@ fn sync_data_task_inner() {
             }
             
         }
-        let _ = &(*CUR_NUMBER).write().unwrap().push_back(max_number);
-        let _ = &(*SYNC_DATA).write().unwrap().pop_front().unwrap();
-    }else {
-        info!("Syncing data!");
-    }
+        let _ = &(*CUR_NUMBER).write().unwrap().push_front(max_number);
+    //     let _ = &(*SYNC_DATA).write().unwrap().pop_front().unwrap();
+    // }else {
+    //     info!("Syncing data!");
+    // }
     
     
 }
@@ -235,22 +237,25 @@ pub fn update_task(sync_num_worker: usize, interval: u64){
     };
     loop {
         let q = UpdateInput::Update();
-        update_tx.clone().send(q).expect("sync update task send error");
+        update_tx.clone().send(q).ok();
         thread::sleep(Duration::from_secs(interval));
     }
 }
 
 fn update_task_inner() {
     info!("start update_task, {:?}", &(*SYNC_DATA).read().unwrap().len());
-    if &(*SYNC_DATA).read().unwrap().len() == &0 {
-        let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("update"));
+    // if &(*SYNC_DATA).read().unwrap().len() == &0 {
+    //     let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("update"));
         let all_domains = DomainInscriptionInfo::query_all().unwrap();
-        for info in all_domains.iter() {
-            let (inscribe_result, _) = get_inscribe_by_number(info.inscribe_num);
-            if inscribe_result.is_some() {
+        let total_size = all_domains.len();
+        for (idx, info) in all_domains.iter().enumerate() {
+            if idx % 100 == 0 {
+                info!("[update taks] idx: {}, total: {}", idx, total_size);
+            }
+            let inscribe_result = Runtime::new().unwrap().block_on(get_content_by_id_api(&info.inscribe_id));
+            if inscribe_result.is_ok() {
                 let content = inscribe_result.unwrap();
                 let content_data = content.content;
-                
                 let address = content.address;
                 let length = content_data.len();
                 if length > 350 && length < 500 {
@@ -282,14 +287,10 @@ fn update_task_inner() {
                         
                         let sign_data = serde_json::to_vec(&sign_info).unwrap();
                         if verify(&sign_data, &inscribe_data.sig, PUBLIC_KEY) {
-                            info!("ecds signature verify success");
-                            let insert_result = DomainInscriptionInfo::update_info_address(info.id, &address);
-                            info!("insert_result: {:?}", insert_result);
-                            if insert_result.is_ok() {
-                                
-                            }else {
-                                break;
-                            }
+                            info!("[update]ecds signature verify success, number: {}, domain: {}, address: {}, new_address: {}", info.inscribe_num, info.domain_name, info.address, address);
+                            let update_result = DomainInscriptionInfo::update_info_address(info.id, &address);
+                            info!("update_result: {:?}", update_result);
+                            
                         }else {
                             warn!("ecds signature verify failed");
                             continue;
@@ -306,10 +307,10 @@ fn update_task_inner() {
             }
             
         }
-        let _ = &(*SYNC_DATA).write().unwrap().pop_front().unwrap();
-    }else {
-        info!("Updating data!");
-    }
+        // let _ = &(*SYNC_DATA).write().unwrap().pop_front().unwrap();
+    // }else {
+    //     info!("Updating data!");
+    // }
     
 }
 
