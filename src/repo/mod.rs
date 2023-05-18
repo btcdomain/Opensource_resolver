@@ -30,5 +30,5 @@ pub use domain_repo::*;
 mod black_repo;
 pub use black_repo::*;
 
-mod page_repo;
-pub use page_repo::*;
+mod cache_repo;
+pub use cache_repo::*;

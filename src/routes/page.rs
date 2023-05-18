@@ -5,7 +5,7 @@ use rocket::response::content::RawHtml;
 use rocket_okapi::openapi;
 use std::collections::HashMap;
 use rocket::response::Redirect;
-use crate::{RequestParams, query_uisat_address, BtcDomainLink, BtcDomainLinkSign, verify_compact, repo::DomainInscriptionInfo, BlackInfo, get_inscribe_by_id, get_content_by_id_api, PageInfo};
+use crate::{RequestParams, get_content_by_id_api, CacheInfo};
 
 lazy_static!{
     pub static ref DEFAULT_FEE_MAP: HashMap<String, String> = HashMap::from([
@@ -23,9 +23,9 @@ pub async fn resolve_page(req: RequestParams) -> Result<RawHtml<String>, Redirec
     let domain = &host[0..host.len() - 5];
     info!("domain: {}", domain);
     let new_url = format!("https://app.btcdomains.io/#/?search={}", domain);
-    let page_info = PageInfo::query_by_domain(&domain);
+    let page_info = CacheInfo::find_by_key(&format!("cache_{}", domain));
     if page_info.is_ok() {
-        let ins_id = page_info.unwrap().inscribe_id;
+        let ins_id = page_info.unwrap().c_val;
         let content = get_content_by_id_api(&ins_id).await;
         return Ok(RawHtml(String::from_utf8(content.unwrap().content).unwrap()))
     }else {

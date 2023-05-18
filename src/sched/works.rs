@@ -1,13 +1,13 @@
+use chrono::Utc;
 use lazy_static::lazy_static;
 use tokio::runtime::Runtime;
 use std::{time::{Duration}, sync::{Arc, Mutex, mpsc, RwLock}, thread, collections::VecDeque};
 use rocket::log::{info_ as info, warn_ as warn};
 use crate::{get_now_time, InscribeSignData, START_INSCRIPTION_NUMBER, InscribeData, verify, repo::DomainInscriptionInfo, 
-    get_inscribe_by_number, PUBLIC_KEY, ord_index_service, get_content_cmd, get_addr_by_id, get_content_by_id_api, get_content_by_number_api};
+    get_inscribe_by_number, PUBLIC_KEY, ord_index_service, get_content_cmd, get_addr_by_id, get_content_by_id_api, get_content_by_number_api, CacheInfo};
 
 lazy_static! {
     pub static ref SYNC_DATA: Arc<RwLock<VecDeque<String>>> = Arc::new(RwLock::new(VecDeque::new()));
-    pub static ref CUR_NUMBER: Arc<RwLock<VecDeque<i64>>> = Arc::new(RwLock::new(VecDeque::new()));
     pub static ref ORD_INDEX: Arc<RwLock<VecDeque<String>>> = Arc::new(RwLock::new(VecDeque::new()));
 
 }
@@ -90,106 +90,112 @@ pub fn sync_data_task(sync_num_worker: usize, interval: u64){
 
 fn sync_data_task_inner() {
     info!("start sync_data_task, {:?}", &(*SYNC_DATA).read().unwrap().len());
-    // if &(*SYNC_DATA).read().unwrap().len() == &0 {
-    //     let _ =&(*SYNC_DATA).write().unwrap().push_back(String::from("sync data"));
-        let lastest = DomainInscriptionInfo::query_lastest_number().unwrap();
-        let mut max_number = if &(*CUR_NUMBER).read().unwrap().len() == &0 {
-            std::cmp::max(lastest, START_INSCRIPTION_NUMBER)
+    let lastest = DomainInscriptionInfo::query_lastest_number().unwrap();
+    let cache_number_key = "cache_number_key";
+    let cache_info = CacheInfo::find_by_key(&cache_number_key);
+    let mut max_number = std::cmp::max(lastest, START_INSCRIPTION_NUMBER);
+    info!("latest: {}, max: {}, cache: {:?}", lastest, max_number, cache_info);
+    if cache_info.is_ok() {
+        let cache_number = cache_info.unwrap().c_val;
+        let cache_number = if cache_number.is_empty() {
+            0
         }else {
-            let cur_number = &(*CUR_NUMBER).write().unwrap().pop_front().unwrap();
-            info!("cur_number: {}, lastest: {}", cur_number, lastest);
-            std::cmp::max(*cur_number - 30, lastest)
-        };
-        
-        let mut break_count = 0;
-        let mut counter = 0;
-        loop {
-            counter += 1;
-            if counter == 2000 {
-                break;
+            match cache_number.parse::<i64>() {
+                Ok(num) => num,
+                Err(_) => 0,
             }
-            max_number += 1;
-            info!("query number: {}", max_number);
-            let inscribe_result = Runtime::new().unwrap().block_on(get_content_by_number_api(max_number));
-            if inscribe_result.is_ok() {
-                let content = inscribe_result.unwrap();
-                let content_data = content.content;
-                let inscribe_num = content.inscribe_num;
-                let inscribe_id = content.inscribe_id;
-                let length = content_data.len();
-                let address = content.address;
-                if length > 350 && length < 500 {
-                    let format_data = serde_json::from_slice(&content_data);
-                    if format_data.is_ok() {
-                        let inscribe_data: InscribeData = format_data.unwrap();
-                        info!("inscribe data: {:?}", inscribe_data);
-                        
-                        let domain_name = inscribe_data.name;
-                        let expire_date = inscribe_data.expire_date;
-                        let now_date = get_now_time();
-                        if expire_date < now_date {
-                            warn!("domain: {}, is expired, now: {}, expire_time: {}", domain_name, now_date, expire_date);
-                            continue;
-                        }
-
-                        let sign_info = InscribeSignData{
-                            name: domain_name.clone(),
-                            first_owner: inscribe_data.first_owner,
-                            create_date: inscribe_data.create_date,
-                            register_date: inscribe_data.register_date,
-                            expire_date: expire_date
-                        };
-                        let sign_data = serde_json::to_vec(&sign_info).unwrap();
-
-
-                        if verify(&sign_data, &inscribe_data.sig, PUBLIC_KEY) {
-                            info!("ecds signature verify success");
-                            let info = DomainInscriptionInfo { 
-                                id: 0,
-                                inscribe_num: inscribe_num as i64, 
-                                inscribe_id: inscribe_id, 
-                                sat: 0, 
-                                domain_name: domain_name.clone(), 
-                                address: address,
-                                create_time: get_now_time(),
-                                update_time: get_now_time(),
-                                expire_date: expire_date,
-                                register_date: inscribe_data.register_date,
-                            };
-                            let check = DomainInscriptionInfo::query_by_domain(&domain_name);
-                            if check.is_ok() {
-
-                            }else {
-                                let insert_result = DomainInscriptionInfo::insert_inscribe_info(info);
-                                info!("insert_result: {:?}", insert_result);
-                            }
-                        }else {
-                            info!("ecds signature verify failed");
-                            continue;
-                        }
-                        
-                    }else {
-
+        };
+        max_number = std::cmp::max(cache_number, lastest)
+    }
+    let mut break_count = 0;
+    loop {
+        max_number += 1;
+        info!("query number: {}", max_number);
+        let inscribe_result = Runtime::new().unwrap().block_on(get_content_by_number_api(max_number));
+        if inscribe_result.is_ok() {
+            let content = inscribe_result.unwrap();
+            let content_data = content.content;
+            let inscribe_num = content.inscribe_num;
+            let inscribe_id = content.inscribe_id;
+            let length = content_data.len();
+            let address = content.address;
+            if length > 350 && length < 500 {
+                let format_data = serde_json::from_slice(&content_data);
+                if format_data.is_ok() {
+                    let inscribe_data: InscribeData = format_data.unwrap();
+                    info!("inscribe data: {:?}", inscribe_data);
+                    
+                    let domain_name = inscribe_data.name;
+                    let expire_date = inscribe_data.expire_date;
+                    let now_date = get_now_time();
+                    if expire_date < now_date {
+                        warn!("domain: {}, is expired, now: {}, expire_time: {}", domain_name, now_date, expire_date);
+                        continue;
                     }
 
+                    let sign_info = InscribeSignData{
+                        name: domain_name.clone(),
+                        first_owner: inscribe_data.first_owner,
+                        create_date: inscribe_data.create_date,
+                        register_date: inscribe_data.register_date,
+                        expire_date: expire_date
+                    };
+                    let sign_data = serde_json::to_vec(&sign_info).unwrap();
+
+
+                    if verify(&sign_data, &inscribe_data.sig, PUBLIC_KEY) {
+                        info!("ecds signature verify success");
+                        let info = DomainInscriptionInfo { 
+                            id: 0,
+                            inscribe_num: inscribe_num as i64, 
+                            inscribe_id: inscribe_id, 
+                            sat: 0, 
+                            domain_name: domain_name.clone(), 
+                            address: address,
+                            create_time: get_now_time(),
+                            update_time: get_now_time(),
+                            expire_date: expire_date,
+                            register_date: inscribe_data.register_date,
+                        };
+                        let check = DomainInscriptionInfo::query_by_domain(&domain_name);
+                        if check.is_ok() {
+
+                        }else {
+                            let insert_result = DomainInscriptionInfo::insert_inscribe_info(info);
+                            info!("insert_result: {:?}", insert_result);
+                        }
+                    }else {
+                        info!("ecds signature verify failed");
+                        continue;
+                    }
+                    
+                }else {
+
                 }
 
-            }else {
-                max_number -= 1;
-                break_count += 1;
-                if break_count > 10 {
-                    break;
-                }
             }
-            
+
+        }else {
+            max_number -= 1;
+            break_count += 1;
+            if break_count > 10 {
+                break;
+            }
         }
-        let _ = &(*CUR_NUMBER).write().unwrap().push_front(max_number);
-    //     let _ = &(*SYNC_DATA).write().unwrap().pop_front().unwrap();
-    // }else {
-    //     info!("Syncing data!");
-    // }
-    
-    
+        if max_number % 1000 == 0 {
+            let cache_info = CacheInfo::find_by_key(&cache_number_key);
+            if cache_info.is_ok() {
+                let _ = CacheInfo::update_cache(cache_number_key, &max_number.to_string());
+            }else {
+                let _ = CacheInfo::insert(CacheInfo { 
+                    id: 0, 
+                    c_key: cache_number_key.to_string(), 
+                    c_val: max_number.to_string(), 
+                    create_time: Utc::now().naive_utc() 
+                });
+            }
+        }
+    }
 }
 
 

@@ -25,9 +25,10 @@ diesel::table! {
 }
 
 diesel::table! {
-    page_info (id) {
+    cache_info(id) {
         id -> BigInt,
-        domain_name -> Varchar,
-        inscribe_id -> Varchar,
+        c_key -> Varchar,
+        c_val -> Varchar,
+        create_time -> Timestamp,
     }
 }
