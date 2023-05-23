@@ -178,11 +178,9 @@ fn sync_data_task_inner() {
         }else {
             max_number -= 1;
             break_count += 1;
-            if break_count > 10 {
-                break;
-            }
+            
         }
-        if max_number % 1000 == 0 {
+        if break_count > 10 || max_number % 1000 == 0 {
             let cache_info = CacheInfo::find_by_key(&cache_number_key);
             if cache_info.is_ok() {
                 let _ = CacheInfo::update_cache(cache_number_key, &max_number.to_string());
@@ -193,6 +191,9 @@ fn sync_data_task_inner() {
                     c_val: max_number.to_string(), 
                     create_time: Utc::now().naive_utc() 
                 });
+            }
+            if break_count > 10 {
+                break;
             }
         }
     }
