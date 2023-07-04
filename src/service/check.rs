@@ -50,12 +50,18 @@ pub async fn check_inscription(number: i64, id: i64, address: &str) -> Option<In
                         img_url: inscribe_data.img_url,
                     });
                 }else {
+                    info!("ecdsa verify failed: {}", number);
                     return None;
                 }                  
             }else {
+                info!("format data failed: {}, {:?}", number, format_data.err());
                 return None;
             }
+        }else {
+            info!("data length is not valid: {}, {}", number, length);
         }
+    }else {
+        info!("---query number failed: {}, {:?}", number, inscribe_result.err());
     }
     return None;
 }

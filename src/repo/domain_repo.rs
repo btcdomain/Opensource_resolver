@@ -82,6 +82,19 @@ impl DomainInscriptionInfo {
             )
             .execute(&mut conn)
     }
+
+    pub fn update_info_address_number(data_id: i64, new_address: &str, number: i64) -> QueryResult<usize> {
+        let mut conn = POOL.get().unwrap();
+        diesel::update(domain_inscription_info::table.find(data_id))
+            .set(
+                (
+                    domain_inscription_info::update_time.eq(get_now_time()),
+                    domain_inscription_info::inscribe_num.eq(number),
+                    domain_inscription_info::address.eq(new_address)
+                )
+            )
+            .execute(&mut conn)
+    }
     
     pub fn delete_info(data_id: i64) -> QueryResult<usize> {
         let mut conn = POOL.get().unwrap();

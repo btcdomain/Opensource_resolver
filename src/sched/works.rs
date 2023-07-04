@@ -108,6 +108,7 @@ fn sync_data_task_inner() {
         max_number = std::cmp::max(cache_number, lastest)
     }
     let mut break_count = 0;
+    
     loop {
         max_number += 1;
         info!("query number: {}", max_number);
@@ -264,6 +265,7 @@ fn update_task_inner() {
                 let content = inscribe_result.unwrap();
                 let content_data = content.content;
                 let address = content.address;
+                let inscribe_number = content.inscribe_num as i64;
                 let length = content_data.len();
                 if length > 350 && length < 500 {
                     let format_data = serde_json::from_slice(&content_data);
@@ -295,7 +297,9 @@ fn update_task_inner() {
                         let sign_data = serde_json::to_vec(&sign_info).unwrap();
                         if verify(&sign_data, &inscribe_data.sig, PUBLIC_KEY) {
                             info!("[update]ecds signature verify success, number: {}, domain: {}, address: {}, new_address: {}", info.inscribe_num, info.domain_name, info.address, address);
+                            
                             let update_result = DomainInscriptionInfo::update_info_address(info.id, &address);
+                            // let update_result = DomainInscriptionInfo::update_info_address_number(info.id, &address, inscribe_number);
                             info!("update_result: {:?}", update_result);
                             
                         }else {

@@ -14,3 +14,14 @@ insert cache_info values(0, 'cache_bitcoinbrc20.btc', '983e1348a59092cae6bb42abe
 insert cache_info values(0, 'cache_match3pizzas.btc', '3fe6a0fc6bacc07e79b774a4c91b1f698df0b63173ad26971dbd5c2e7b2a9c1ci0', current_date());
 
 
+
+update domain_inscription_info set inscribe_num=12879080 where id = 4490;
+update domain_inscription_info set inscribe_num=12879519 where id = 4491;
+update domain_inscription_info set inscribe_num=12879739 where id = 4492;
+update domain_inscription_info set inscribe_num=12879822 where id = 4493;
+update domain_inscription_info set inscribe_num=12882000 where id = 4494;
+update domain_inscription_info set inscribe_num=12883262 where id = 4495;
+update domain_inscription_info set inscribe_num=12887229 where id = 4496;
+
+
+update domain_inscription_info set inscribe_num=12887229 where id = 4495;

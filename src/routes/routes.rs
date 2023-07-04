@@ -70,6 +70,7 @@ pub async fn resolve_address(address: String) -> Result<Value, status::Custom<Va
     let mut resp_data = Vec::new();
     if query.is_ok() {
         let infos = query.unwrap();
+        info_!("resolve_address query: {:?}", infos);
         for info in infos {
             let check_result = check_inscription(info.inscribe_num, info.id, &info.address).await;
             if check_result.is_some() {
